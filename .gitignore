@@ -1,0 +1,17 @@
+.DS_Store
+.env
+.env.*
+!.env.example
+node_modules/
+target/
+apps/*/dist/
+packages/*/dist/
+.agentops/audit/action-log.jsonl
+.agentops/sandboxes/
+npm-debug.log*
+dist/
+coverage/
+.netlify/
+.netlify-home/
+deploy/artifacts/
+.vercel/

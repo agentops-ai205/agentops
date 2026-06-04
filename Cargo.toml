@@ -1,0 +1,8 @@
+[workspace]
+members = ["crates/agentops-core", "crates/agentops-cli"]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "Proprietary"
+version = "1.0.0"
