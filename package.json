@@ -15,7 +15,7 @@
     "build:core": "cargo build --workspace",
     "test:core": "cargo test --workspace",
     "build": "npm run build:core && npm --workspace @agentops/shared run build && npm --workspace @agentops/api run build && npm --workspace @agentops/web run build",
-    "test": "npm run build:core && npm run test:core && npm --workspace @agentops/shared run build && npm --workspace @agentops/api run test",
+    "test": "npm run build:core && npm run test:core && npm --workspace @agentops/api run test",
     "db:migrate": "npm --workspace @agentops/api run db:migrate",
     "start": "concurrently -n api,web -c cyan,green \"npm --workspace @agentops/api run start\" \"npm --workspace @agentops/web run preview -- --host 127.0.0.1\"",
     "agentops:init": "npm --workspace @agentops/api run agentops:init"
