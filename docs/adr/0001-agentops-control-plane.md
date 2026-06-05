@@ -6,7 +6,7 @@ Accepte.
 
 ## Contexte
 
-Le projet vise a gouverner des agents de codage auto-ameliorants sous supervision humaine. Deux options sont possibles:
+Le projet vise a gouverner des operations IA auto-ameliorantes sous supervision humaine: agents, modeles, outils, workflows, web app, IDE, preuves et audit. Deux options sont possibles:
 
 - construire un agent IA autonome centre sur un fournisseur ou un modele;
 - construire un control plane neutre qui controle plusieurs agents, providers et outils.

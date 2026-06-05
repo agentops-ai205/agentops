@@ -1,14 +1,16 @@
 # AgentOps OS
 
-AgentOps OS est une plateforme fullstack pour gouverner des agents de codage auto-ameliorants sous supervision humaine. Elle transforme une intention humaine en mission structuree, controlee par policies, preuves, approvals, audit, evaluation et memoire projet.
+AgentOps OS est une plateforme fullstack pour piloter des operations IA critiques sous supervision humaine: agents, modeles, outils, workflows, web app, IDE, preuves et audit. Elle transforme une intention humaine en mission structuree, controlee par policies, approvals, evidence, evaluation et memoire projet.
 
 ## Stack
 
 - Web: React, TypeScript, Vite
+- Desktop installable: PWA standalone (`agentops.ai`) avec le meme cockpit et IDE
 - API: Fastify, TypeScript
 - DB canonique: PostgreSQL via `DATABASE_URL`
 - Persistence projet: noyau `.agentops` en YAML, JSON, JSONL et Markdown
 - Core systeme: Rust, avec CLI `agentops`
+- IDE integre: agent runner, terminal sandboxe, patch proposals, evidence capture
 - Deploy: Docker Compose, compatible local ou cloud PostgreSQL
 
 ## Lancer en local
@@ -39,6 +41,10 @@ docker compose up --build
 ```
 
 Pour un cloud DB, garder les services `api` et `web`, puis remplacer `DATABASE_URL` par l'URL PostgreSQL fournie par Supabase, Neon, Railway, Render, RDS ou autre.
+
+Le deploiement production conteneurise est prepare dans `deploy/docker-compose.production.yml`. Il attend `deploy/production.env`, cree depuis `deploy/production.env.example`, et peut exposer l'API sur `api.agentops.ai`.
+
+La release GitHub est preparee dans `.github/workflows/release.yml`. Elle verifie le projet, publie les images Docker sur GHCR, puis deploie Netlify si `NETLIFY_AUTH_TOKEN` et `NETLIFY_SITE_ID` sont disponibles. Les secrets attendus sont listes dans `docs/deployment/github-secrets.md`.
 
 ## Architecture production
 
@@ -75,8 +81,16 @@ Le dossier `.agentops` est la constitution portable du projet:
 - `POST /v1/missions/:missionId/evaluate`
 - `POST /v1/missions/:missionId/close`
 - `GET /v1/agents`
+- `GET /v1/tools`
+- `GET /v1/model-providers`
+- `GET /v1/jobs`
+- `POST /v1/jobs`
+- `POST /v1/missions/:missionId/agents/run`
 - `GET /v1/policies/evaluate`
+- `POST /v1/policies/evaluate`
 - `POST /v1/evidence`
+- `POST /v1/missions/:missionId/patches/propose`
+- `POST /v1/patches/:patchId/apply`
 - `GET /v1/audit`
 - `POST /v1/improvements/propose`
 - `POST /v1/improvements/:id/approve`
@@ -84,4 +98,4 @@ Le dossier `.agentops` est la constitution portable du projet:
 
 ## Doctrine
 
-AgentOps OS n'est pas un agent. C'est le systeme qui rend les agents utiles, mesurables, auditables, gouvernes et ameliorables.
+AgentOps OS n'est pas un agent. C'est le control plane qui rend les agents, modeles et outils utiles, mesurables, auditables, gouvernes et ameliorables.

@@ -2,7 +2,7 @@
 
 ## Objectif
 
-AgentOps OS est un control plane pour agents de codage gouvernes. Le produit ne doit pas dependre d'un modele unique, d'un fournisseur unique ou d'un agent autonome non controle. Sa valeur centrale est de transformer une intention humaine en mission tracable, autorisee, executee dans des limites explicites, prouvee, evaluee et auditee.
+AgentOps OS est un control plane pour operations IA critiques: agents, modeles, outils, workflows, web app, IDE, preuves et audit. Le produit ne doit pas dependre d'un modele unique, d'un fournisseur unique ou d'un agent autonome non controle. Sa valeur centrale est de transformer une intention humaine en mission tracable, autorisee, executee dans des limites explicites, prouvee, evaluee et auditee.
 
 Le systeme doit conserver trois modes:
 

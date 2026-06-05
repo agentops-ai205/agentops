@@ -9,8 +9,8 @@ export const locales: { code: Locale; label: string }[] = [
 
 export const messages = {
   en: {
-    brandSubtitle: "Governed coding agents",
-    cockpit: "Software intelligence factory cockpit",
+    brandSubtitle: "AI operations control plane",
+    cockpit: "Agentic workspace for web, IDE, models and audit",
     missions: "Missions",
     agents: "Agents",
     policies: "Policies",
@@ -63,8 +63,8 @@ export const messages = {
     done: "done"
   },
   fr: {
-    brandSubtitle: "Agents de codage gouvernes",
-    cockpit: "Cockpit d'usine d'intelligence logicielle",
+    brandSubtitle: "Poste de controle des operations IA",
+    cockpit: "Workspace agentique pour web, IDE, modeles et audit",
     missions: "Missions",
     agents: "Agents",
     policies: "Policies",
@@ -117,8 +117,8 @@ export const messages = {
     done: "termine"
   },
   es: {
-    brandSubtitle: "Agentes de codigo gobernados",
-    cockpit: "Panel de fabrica de inteligencia de software",
+    brandSubtitle: "Plano de control de operaciones IA",
+    cockpit: "Workspace agentico para web, IDE, modelos y auditoria",
     missions: "Misiones",
     agents: "Agentes",
     policies: "Politicas",
@@ -171,8 +171,8 @@ export const messages = {
     done: "terminado"
   },
   zh: {
-    brandSubtitle: "受治理的编码代理",
-    cockpit: "软件智能工厂驾驶舱",
+    brandSubtitle: "AI 运营控制平面",
+    cockpit: "面向 Web、IDE、模型与审计的代理工作区",
     missions: "任务",
     agents: "代理",
     policies: "策略",

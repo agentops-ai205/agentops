@@ -3,6 +3,14 @@
   "private": true,
   "version": "1.0.0",
   "description": "AgentOps OS - gouvernance, orchestration, audit et evaluation pour agents de codage sous supervision humaine.",
+  "homepage": "https://agentops.ai",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/agentops-ai205/agentops.git"
+  },
+  "bugs": {
+    "url": "https://github.com/agentops-ai205/agentops/issues"
+  },
   "type": "module",
   "workspaces": [
     "apps/*",
@@ -18,7 +26,8 @@
     "test": "npm run build:core && npm run test:core && npm --workspace @agentops/shared run build && npm --workspace @agentops/api run test",
     "db:migrate": "npm --workspace @agentops/api run db:migrate",
     "start": "concurrently -n api,web -c cyan,green \"npm --workspace @agentops/api run start\" \"npm --workspace @agentops/web run preview -- --host 127.0.0.1\"",
-    "agentops:init": "npm --workspace @agentops/api run agentops:init"
+    "agentops:init": "npm --workspace @agentops/api run agentops:init",
+    "preflight:prod": "node scripts/production-preflight.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
