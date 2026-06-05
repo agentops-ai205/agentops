@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Import validated AgentOps bundle
+      - name: Import validated AgentOps bundle except workflow files
         shell: bash
         run: |
           set -euo pipefail
@@ -4867,11 +4867,21 @@ jobs:
           base64 -d /tmp/agentops-main.bundle.b64 > /tmp/agentops-main.bundle
           git bundle verify /tmp/agentops-main.bundle
           git fetch /tmp/agentops-main.bundle main:refs/heads/agentops-bundle-main
-          git rm -r --ignore-unmatch .
-          git checkout agentops-bundle-main -- .
+          while IFS= read -r -d '' file; do
+            case "$file" in
+              .github/workflows/*) ;;
+              *) git rm -f --ignore-unmatch "$file" ;;
+            esac
+          done < <(git ls-files -z)
+          while IFS= read -r -d '' file; do
+            case "$file" in
+              .github/workflows/*) ;;
+              *) git checkout agentops-bundle-main -- "$file" ;;
+            esac
+          done < <(git ls-tree -r -z --name-only agentops-bundle-main)
           git add -A
           if git diff --cached --quiet; then
-            echo "Bundle tree already matches main."
+            echo "Bundle tree already matches main excluding workflow files."
             exit 0
           fi
           git commit -m "Import AgentOps production platform"
