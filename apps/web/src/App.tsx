@@ -505,7 +505,7 @@ export default function App() {
           <section className="osCard">
             <div className="miniMark">A</div>
             <strong>AgentOps OS</strong>
-            <Badge value="preview" />
+            <Badge value="production" />
           </section>
         </aside>
 
