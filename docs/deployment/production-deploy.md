@@ -9,7 +9,7 @@ Target accounts:
 Target public surface:
 
 - Web: `https://agentops.ai`
-- API: `https://api.agentops.ai`
+- API: `https://agentops-ai205.netlify.app/api` now, then `https://api.agentops.ai`
 - Temporary web preview: `https://agentops-ai205.netlify.app`
 
 ## Build Gates
@@ -63,9 +63,9 @@ Use `netlify.toml`. Set:
 
 - Build command: from `netlify.toml`
 - Publish directory: `apps/web/dist`
-- `VITE_API_URL=https://api.agentops.ai`
+- `VITE_API_URL=https://agentops-ai205.netlify.app/api` until `api.agentops.ai` is live.
 
-`netlify.toml` already pins `VITE_API_URL=https://api.agentops.ai` so a Netlify deploy cannot accidentally ship a frontend pointing at `127.0.0.1`.
+`netlify.toml` already pins `VITE_API_URL=https://agentops-ai205.netlify.app/api` so a Netlify deploy cannot accidentally ship a frontend pointing at `127.0.0.1`.
 
 Custom domain:
 
@@ -98,7 +98,7 @@ To validate only the committed template:
 npm run preflight:prod -- --env deploy/production.env.example --allow-placeholders
 ```
 
-DNS for the API should map `api.agentops.ai` to the chosen API host. After the API is live, set Netlify `VITE_API_URL=https://api.agentops.ai` and rebuild the web app.
+DNS for the API should map `api.agentops.ai` to the chosen API host. After the API domain is live, set Netlify `VITE_API_URL=https://api.agentops.ai` and rebuild the web app.
 
 For a generic Docker host:
 
@@ -116,4 +116,4 @@ docker compose -f deploy/docker-compose.production.yml --profile web up -d --bui
 
 ## Current Deployment Note
 
-Netlify can deploy the web app directly. The API needs a container-capable host or a server runtime that can run the Node API plus the Rust `agentops` binary. Netlify Functions are not the right default for this API because the worker/sandbox model needs longer-lived execution.
+Netlify now exposes the transactional API through `/api/*` for the web cockpit, missions, approvals, evidence, policy checks and audit backed by Supabase. The long-running worker/sandbox path should still move to a container-capable host before higher-autonomy code execution is exposed publicly.

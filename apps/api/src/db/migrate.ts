@@ -15,8 +15,19 @@ export async function migrate() {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+async function runCli() {
   await migrate();
   await sql.end();
   console.log("AgentOps migrations applied");
+}
+
+if (isCliEntrypoint("migrate.js")) {
+  runCli().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}
+
+function isCliEntrypoint(fileName: string) {
+  return Boolean(process.argv[1]?.replaceAll("\\", "/").endsWith(`/db/${fileName}`));
 }

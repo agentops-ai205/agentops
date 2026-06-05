@@ -297,7 +297,18 @@ export async function initializeKernel(root = config.projectRoot) {
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+async function runCli() {
   await initializeKernel();
   console.log(`AgentOps kernel initialized at ${path.join(config.projectRoot, ".agentops")}`);
+}
+
+if (isCliEntrypoint("kernel.js")) {
+  runCli().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}
+
+function isCliEntrypoint(fileName: string) {
+  return Boolean(process.argv[1]?.replaceAll("\\", "/").endsWith(`/services/${fileName}`));
 }

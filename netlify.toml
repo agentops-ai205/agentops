@@ -1,11 +1,21 @@
 [build]
-  command = "npm ci && npm --workspace @agentops/shared run build && npm --workspace @agentops/web run build"
+  command = "npm ci && npm run build"
   publish = "apps/web/dist"
 
 [build.environment]
   NODE_VERSION = "22"
   NPM_VERSION = "10"
-  VITE_API_URL = "https://api.agentops.ai"
+  VITE_API_URL = "https://agentops-ai205.netlify.app/api"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  included_files = ["apps/api/migrations/*.sql"]
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
 
 [[redirects]]
   from = "/*"

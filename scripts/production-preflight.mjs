@@ -89,7 +89,9 @@ checks.push({
 });
 
 checks.push({
-  ok: env.VITE_API_URL === "https://api.agentops.ai",
+  ok: ["https://api.agentops.ai", "https://agentops-ai205.netlify.app/api"].includes(
+    env.VITE_API_URL ?? ""
+  ),
   name: "env:VITE_API_URL",
   message: mask(env.VITE_API_URL)
 });
