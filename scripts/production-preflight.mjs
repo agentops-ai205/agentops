@@ -27,7 +27,8 @@ const requiredFiles = [
   "scripts/production-bootstrap.mjs",
   "scripts/production-smoke.mjs",
   "apps/api/migrations/0001_agentops.sql",
-  "apps/api/migrations/0002_supabase_ready_tenancy.sql"
+  "apps/api/migrations/0002_supabase_ready_tenancy.sql",
+  "apps/api/migrations/0003_supabase_rls.sql"
 ];
 
 const checks = [];

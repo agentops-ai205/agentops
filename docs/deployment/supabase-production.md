@@ -22,12 +22,16 @@ Every production data table now carries `organization_id`. Supabase RLS policies
 
 Do not enable broad anonymous access. The API should connect with a server-side role; browser clients should go through the API unless a table has explicit read-only RLS policies.
 
+`0003_supabase_rls.sql` enables Row Level Security and adds tenant-scoped policies for every operational table. The policy boundary is `public.agentops_current_organization_id()`, resolved from either:
+
+- `app.current_organization_id`, for trusted server-side database sessions that explicitly set the tenant.
+- Supabase JWT claims, preferably `app_metadata.organization_id`, for future direct Supabase-authenticated clients.
+
+The production web app should still call the AgentOps API instead of using browser-side table access.
+
 ## Migration Order
 
 1. Apply `0001_agentops.sql`.
 2. Apply `0002_supabase_ready_tenancy.sql`.
-3. Run `/v1/bootstrap` once from a controlled operator context.
-
-## Current Limitation
-
-RLS is schema-ready but not enabled by default in migrations. That is intentional until the final Supabase auth model is chosen, because enabling RLS without exact policies can break the API at deploy time.
+3. Apply `0003_supabase_rls.sql`.
+4. Run `/v1/bootstrap` once from a controlled operator context.
