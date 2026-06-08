@@ -18,9 +18,9 @@ Target public surface:
 Run before every deploy:
 
 ```bash
-npm test -- --run
+npm test
 npm run build
-npm run preflight:prod
+npm run preflight:prod -- --env deploy/production.env.example --allow-placeholders
 docker build -f Dockerfile.api -t agentops-api:local .
 docker build -f Dockerfile.web -t agentops-web:local .
 ```
@@ -38,7 +38,21 @@ Production release workflow:
 - `.github/workflows/release.yml`
 - Publishes `ghcr.io/agentops-ai205/agentops-api`
 - Publishes `ghcr.io/agentops-ai205/agentops-web`
+- Applies Supabase migrations when `PRODUCTION_DATABASE_URL` exists.
 - Deploys the web app to Netlify when `NETLIFY_AUTH_TOKEN` and `NETLIFY_SITE_ID` exist.
+- Bootstraps the control plane when `AGENTOPS_OPERATOR_TOKEN` exists.
+- Runs smoke checks against `https://capable-cat-f6133c.netlify.app` and `/api`.
+
+Continuous integration:
+
+- `.github/workflows/ci.yml` validates tests, build, preflight, dependency audit and Docker image builds on `codex/agentops-v3-production`.
+- `.github/workflows/desktop.yml` builds macOS and Windows desktop bundles on branch pushes, pull requests, manual dispatch and release tags.
+
+Desktop release workflow:
+
+- Tag a release with `vX.Y.Z`.
+- GitHub builds macOS and Windows bundles from the shared React UI and Tauri runtime.
+- Bundles are attached to a draft GitHub Release for signing/notarization review.
 
 Required GitHub/Netlify/API secrets are listed in `docs/deployment/github-secrets.md`.
 

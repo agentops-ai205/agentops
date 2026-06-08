@@ -6,6 +6,8 @@ Set these values in the `agentops-ai205/agentops` GitHub repository before runni
 
 - `NETLIFY_AUTH_TOKEN`: Netlify personal access token used only for web deploy.
 - `NETLIFY_SITE_ID`: Netlify site id for `capable-cat-f6133c`.
+- `PRODUCTION_DATABASE_URL`: Supabase PostgreSQL connection string for release-time migrations.
+- `AGENTOPS_OPERATOR_TOKEN`: same operator token configured in Netlify/API runtime; used for release bootstrap and authenticated smoke checks.
 
 Desktop signing secrets are required only for public signed installers:
 
@@ -23,6 +25,11 @@ The GitHub release workflow publishes Docker images to:
 
 - `ghcr.io/agentops-ai205/agentops-api`
 - `ghcr.io/agentops-ai205/agentops-web`
+
+Desktop workflow outputs:
+
+- macOS and Windows bundles are uploaded as workflow artifacts on branch builds.
+- tag builds attach bundles to a draft GitHub release. Keep the release draft until signing/notarization is confirmed.
 
 ## API Host
 

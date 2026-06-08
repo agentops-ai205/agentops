@@ -17,6 +17,10 @@ AgentOps Desktop is the native IDE surface for macOS and Windows. The web app re
 - macOS: Apple Silicon and Intel where CI runners are available.
 - Windows: x64 first, ARM64 later if usage justifies it.
 
+## GitHub Workflow
+
+`.github/workflows/desktop.yml` builds macOS and Windows bundles on production branch changes, pull requests, manual dispatch and `v*` tags. Tag builds attach bundles to a draft GitHub Release so signing and notarization can be verified before public publication.
+
 ## Required Release Gates
 
 Run before desktop release:

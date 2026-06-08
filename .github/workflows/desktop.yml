@@ -3,20 +3,45 @@ name: AgentOps Desktop
 on:
   workflow_dispatch:
   push:
+    branches: ["codex/agentops-v3-production"]
     tags:
       - "v*"
+  pull_request:
+    branches: ["codex/agentops-v3-production"]
+    paths:
+      - ".github/workflows/desktop.yml"
+      - "apps/desktop/**"
+      - "apps/web/**"
+      - "packages/shared/**"
+      - "package.json"
+      - "package-lock.json"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "crates/**"
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: agentops-desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  VITE_API_URL: https://capable-cat-f6133c.netlify.app/api
 
 jobs:
   build-desktop:
-    name: Build desktop ${{ matrix.os }}
+    name: Build desktop ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest]
+        include:
+          - name: macos
+            os: macos-latest
+          - name: windows
+            os: windows-latest
 
     steps:
       - name: Checkout
@@ -31,18 +56,50 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/git
+            ~/.cargo/registry
+            target
+            apps/desktop/src-tauri/target
+          key: ${{ runner.os }}-desktop-cargo-${{ hashFiles('Cargo.lock', 'apps/desktop/src-tauri/Cargo.lock', 'apps/desktop/src-tauri/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-desktop-cargo-
+
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify shared product build
-        run: npm run build
+      - name: Build shared web surface
+        run: npm --workspace @agentops/shared run build && npm --workspace @agentops/web run build
+
+      - name: Check desktop runtime
+        run: npm run desktop:check
 
       - name: Build desktop app
         run: npm run desktop:build
 
+      - name: Collect desktop bundle
+        shell: bash
+        run: |
+          mkdir -p desktop-artifacts
+          find apps/desktop/src-tauri/target/release/bundle -type f \
+            \( -name "*.dmg" -o -name "*.msi" -o -name "*.exe" -o -name "*.app.tar.gz" -o -name "*.app.tar.gz.sig" \) \
+            -exec cp {} desktop-artifacts/ \;
+          find desktop-artifacts -maxdepth 1 -type f -print
+
       - name: Upload desktop bundle
         uses: actions/upload-artifact@v4
         with:
-          name: agentops-desktop-${{ matrix.os }}
-          path: apps/desktop/src-tauri/target/release/bundle/**
+          name: agentops-desktop-${{ matrix.name }}-${{ github.sha }}
+          path: desktop-artifacts/**
           if-no-files-found: error
+
+      - name: Attach bundle to GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+          files: desktop-artifacts/**

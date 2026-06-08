@@ -6,9 +6,19 @@ on:
   pull_request:
     branches: ["codex/agentops-v3-production"]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: agentops-ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      VITE_API_URL: https://capable-cat-f6133c.netlify.app/api
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,14 +32,31 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/git
+            ~/.cargo/registry
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock', 'crates/**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
+
       - name: Install dependencies
         run: npm ci
 
+      - name: Audit production dependency floor
+        run: npm audit --audit-level=critical
+
       - name: Test
-        run: npm test -- --run
+        run: npm test
 
       - name: Build
         run: npm run build
+
+      - name: Production preflight
+        run: npm run preflight:prod -- --env deploy/production.env.example --allow-placeholders
 
       - name: Build API image
         run: docker build -f Dockerfile.api -t agentops-api:ci .

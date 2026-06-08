@@ -10,14 +10,21 @@ permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: agentops-release-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: agentops-ai205/agentops
-  VITE_API_URL: https://api.agentops.ai
+  AGENTOPS_API_URL: https://capable-cat-f6133c.netlify.app/api
+  AGENTOPS_WEB_URL: https://capable-cat-f6133c.netlify.app
+  VITE_API_URL: https://capable-cat-f6133c.netlify.app/api
 
 jobs:
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,14 +38,39 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Cache Cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/git
+            ~/.cargo/registry
+            target
+          key: ${{ runner.os }}-release-cargo-${{ hashFiles('Cargo.lock', 'crates/**/Cargo.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-release-cargo-
+
       - name: Install dependencies
         run: npm ci
 
+      - name: Audit production dependency floor
+        run: npm audit --audit-level=critical
+
       - name: Verify
         run: |
-          npm test -- --run
+          npm test
           npm run build
           npm run preflight:prod -- --env deploy/production.env.example --allow-placeholders
+
+      - name: Apply Supabase migrations
+        env:
+          PRODUCTION_DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+        run: |
+          if [ -z "$PRODUCTION_DATABASE_URL" ]; then
+            echo "Skipping Supabase migrations because PRODUCTION_DATABASE_URL is missing."
+            exit 0
+          fi
+          printf 'DATABASE_URL=%s\n' "$PRODUCTION_DATABASE_URL" > /tmp/agentops-production.env
+          npm run prod:migrate -- --env /tmp/agentops-production.env
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -82,3 +114,19 @@ jobs:
             exit 0
           fi
           npx --yes netlify-cli deploy --prod --dir apps/web/dist --site "$NETLIFY_SITE_ID" --auth "$NETLIFY_AUTH_TOKEN"
+
+      - name: Bootstrap production control plane
+        env:
+          AGENTOPS_OPERATOR_TOKEN: ${{ secrets.AGENTOPS_OPERATOR_TOKEN }}
+        run: |
+          if [ -z "$AGENTOPS_OPERATOR_TOKEN" ]; then
+            echo "Skipping bootstrap because AGENTOPS_OPERATOR_TOKEN is missing."
+            exit 0
+          fi
+          printf 'AGENTOPS_OPERATOR_TOKEN=%s\n' "$AGENTOPS_OPERATOR_TOKEN" > /tmp/agentops-bootstrap.env
+          npm run prod:bootstrap -- --env /tmp/agentops-bootstrap.env --api "$AGENTOPS_API_URL"
+
+      - name: Production smoke test
+        env:
+          AGENTOPS_OPERATOR_TOKEN: ${{ secrets.AGENTOPS_OPERATOR_TOKEN }}
+        run: npm run prod:smoke -- --api "$AGENTOPS_API_URL" --web "$AGENTOPS_WEB_URL"
