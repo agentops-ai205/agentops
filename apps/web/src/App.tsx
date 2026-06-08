@@ -35,6 +35,16 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent, type ReactElement } from "react";
 import { API_URL, ApiClientError, api, getOperatorToken, saveOperatorToken } from "./api";
+import {
+  applyDesktopPatch,
+  getDesktopRuntime,
+  hasDesktopRuntime,
+  listDesktopFiles,
+  readDesktopFile,
+  runDesktopCommand,
+  writeDesktopFile,
+  type DesktopRuntime
+} from "./desktop";
 
 type Row = Record<string, unknown>;
 type WorkMode = "agent" | "terminal" | "patch" | "evidence";
@@ -241,8 +251,9 @@ export default function App() {
   const [activeFileContent, setActiveFileContent] = useState("");
   const [activeFileLanguage, setActiveFileLanguage] = useState("typescript");
   const [ideCommand, setIdeCommand] = useState("npm test");
-  const [ideOutput, setIdeOutput] = useState("Local IDE runtime is waiting for the API connection.");
+  const [ideOutput, setIdeOutput] = useState("Local IDE runtime is waiting for a desktop or API connection.");
   const [ideMessage, setIdeMessage] = useState("Desktop IDE runtime pending.");
+  const [desktopRuntime, setDesktopRuntime] = useState<DesktopRuntime | null>(null);
 
   async function refresh() {
     const [liveData, healthData] = await Promise.all([
@@ -281,6 +292,8 @@ export default function App() {
   }, []);
 
   const liveReady = status.startsWith("Live API");
+  const desktopReady = Boolean(desktopRuntime);
+  const ideRuntimeReady = desktopReady || liveReady;
   const apiReachable = Boolean(liveStatus?.ok);
   const databaseReady = healthStatus?.checks.database === true;
   const operatorUnlocked = liveReady && Boolean(operatorToken);
@@ -329,11 +342,25 @@ export default function App() {
   const riskScore = riskScoreFor(activeMission.riskLevel, blockers);
 
   useEffect(() => {
-    if (liveReady) {
+    if (!hasDesktopRuntime()) return;
+    getDesktopRuntime()
+      .then((runtime) => {
+        setDesktopRuntime(runtime);
+        setIdeDirectory("");
+        setIdeMessage(`Desktop runtime ready on ${runtime.platform}.`);
+        setIdeOutput("Native desktop runtime connected. Commands are allowlisted and project-scoped.");
+      })
+      .catch((error) => {
+        setIdeMessage(error instanceof Error ? error.message : "Desktop runtime unavailable.");
+      });
+  }, []);
+
+  useEffect(() => {
+    if (ideRuntimeReady) {
       void refreshIde("");
       void openIdeFile(activeFilePath);
     }
-  }, [liveReady]);
+  }, [ideRuntimeReady]);
 
   async function runControlAction(action: () => Promise<unknown>, success: string) {
     if (!liveReady) {
@@ -489,14 +516,14 @@ export default function App() {
   }
 
   async function refreshIde(directory = ideDirectory) {
-    if (!liveReady) {
-      setIdeMessage("Connect the local API before using the desktop IDE runtime.");
+    if (!ideRuntimeReady) {
+      setIdeMessage("Open the desktop app or connect the local API before using the IDE runtime.");
       return;
     }
     try {
-      const data = await api<{ entries: IdeEntry[]; path: string }>(
-        `/v1/ide/files?path=${encodeURIComponent(directory)}`
-      );
+      const data = desktopReady
+        ? await listDesktopFiles(directory)
+        : await api<{ entries: IdeEntry[]; path: string }>(`/v1/ide/files?path=${encodeURIComponent(directory)}`);
       setIdeEntries(data.entries);
       setIdeDirectory(data.path);
       setIdeMessage(data.path ? `Browsing ${data.path}` : "Browsing project root");
@@ -506,9 +533,9 @@ export default function App() {
   }
 
   async function openIdeFile(path: string) {
-    if (!liveReady || !path) return;
+    if (!ideRuntimeReady || !path) return;
     try {
-      const file = await api<IdeFileResponse>(`/v1/ide/file?path=${encodeURIComponent(path)}`);
+      const file = desktopReady ? await readDesktopFile(path) : await api<IdeFileResponse>(`/v1/ide/file?path=${encodeURIComponent(path)}`);
       setActiveFilePath(file.path);
       setActiveFileLanguage(file.language);
       setActiveFileContent(file.content);
@@ -519,20 +546,25 @@ export default function App() {
   }
 
   async function saveIdeFile() {
-    if (!liveReady || !activeFilePath) return;
+    if (!ideRuntimeReady || !activeFilePath) return;
     setBusy(true);
     try {
-      await api("/v1/ide/file", {
-        method: "PUT",
-        body: JSON.stringify({
-          path: activeFilePath,
-          content: activeFileContent,
-          mission_id: activeMission.id,
-          actor_id: "human.operator"
-        })
-      });
-      setIdeMessage(`Saved ${activeFilePath} and attached evidence.`);
-      await refresh();
+      if (desktopReady) {
+        await writeDesktopFile(activeFilePath, activeFileContent);
+        setIdeMessage(`Saved ${activeFilePath} in the desktop workspace.`);
+      } else {
+        await api("/v1/ide/file", {
+          method: "PUT",
+          body: JSON.stringify({
+            path: activeFilePath,
+            content: activeFileContent,
+            mission_id: activeMission.id,
+            actor_id: "human.operator"
+          })
+        });
+        setIdeMessage(`Saved ${activeFilePath} and attached evidence.`);
+        await refresh();
+      }
     } catch (error) {
       setIdeMessage(error instanceof Error ? error.message : "Unable to save file.");
     } finally {
@@ -541,22 +573,32 @@ export default function App() {
   }
 
   async function runIdeCommand() {
-    if (!liveReady || !ideCommand.trim()) return;
+    if (!ideRuntimeReady || !ideCommand.trim()) return;
     setBusy(true);
     setIdeOutput(`$ ${ideCommand}\nRunning...`);
     try {
-      const result = await api<IdeTerminalResult>("/v1/ide/terminal/run", {
-        method: "POST",
-        body: JSON.stringify({
-          command: ideCommand,
-          cwd: "",
-          mission_id: activeMission.id,
-          actor_id: "human.operator"
-        })
-      });
+      const result = desktopReady
+        ? await runDesktopCommand(ideCommand, ideDirectory)
+        : await api<IdeTerminalResult>("/v1/ide/terminal/run", {
+            method: "POST",
+            body: JSON.stringify({
+              command: ideCommand,
+              cwd: "",
+              mission_id: activeMission.id,
+              actor_id: "human.operator"
+            })
+          });
       setIdeOutput(formatTerminalResult(result));
-      setIdeMessage(result.exitCode === 0 ? "Command completed and evidence captured." : "Command failed and evidence captured.");
-      await refresh();
+      setIdeMessage(
+        result.exitCode === 0
+          ? desktopReady
+            ? "Command completed inside the desktop workspace."
+            : "Command completed and evidence captured."
+          : desktopReady
+            ? "Command failed inside the desktop workspace."
+            : "Command failed and evidence captured."
+      );
+      if (!desktopReady) await refresh();
     } catch (error) {
       setIdeOutput(error instanceof Error ? error.message : "Command failed.");
       setIdeMessage("Terminal execution failed.");
@@ -566,24 +608,30 @@ export default function App() {
   }
 
   async function applyIdePatch() {
-    if (!liveReady || !patchDiff.trim()) return;
+    if (!ideRuntimeReady || !patchDiff.trim()) return;
     setBusy(true);
     try {
-      const result = await api<{ applied: boolean; stdout: string; stderr: string; exitCode: number | null }>(
-        "/v1/ide/patch/apply",
-        {
-          method: "POST",
-          body: JSON.stringify({
-            unified_diff: patchDiff,
-            mission_id: activeMission.id,
-            actor_id: "human.operator",
-            confirmed: true
-          })
-        }
-      );
-      setIdeOutput(`${result.applied ? "Patch applied" : "Patch failed"}\n${result.stdout}\n${result.stderr}`.trim());
-      setIdeMessage(result.applied ? "Patch applied locally and evidence captured." : "Patch apply failed; evidence captured.");
-      await refresh();
+      if (desktopReady) {
+        const result = await applyDesktopPatch(patchDiff);
+        setIdeOutput(formatTerminalResult(result));
+        setIdeMessage(result.exitCode === 0 ? "Patch applied inside the desktop workspace." : "Patch apply failed in desktop workspace.");
+      } else {
+        const result = await api<{ applied: boolean; stdout: string; stderr: string; exitCode: number | null }>(
+          "/v1/ide/patch/apply",
+          {
+            method: "POST",
+            body: JSON.stringify({
+              unified_diff: patchDiff,
+              mission_id: activeMission.id,
+              actor_id: "human.operator",
+              confirmed: true
+            })
+          }
+        );
+        setIdeOutput(`${result.applied ? "Patch applied" : "Patch failed"}\n${result.stdout}\n${result.stderr}`.trim());
+        setIdeMessage(result.applied ? "Patch applied locally and evidence captured." : "Patch apply failed; evidence captured.");
+        await refresh();
+      }
       if (activeFilePath) await openIdeFile(activeFilePath);
     } catch (error) {
       setIdeMessage(error instanceof Error ? error.message : "Unable to apply patch.");
@@ -687,7 +735,7 @@ export default function App() {
           <UserCircle2 size={34} />
           <div>
             <strong>Alex Morgan</strong>
-            <span>{liveReady ? "Operator online" : "Preview workspace"}</span>
+            <span>{desktopReady ? "Desktop IDE online" : liveReady ? "Operator online" : "Preview workspace"}</span>
           </div>
         </div>
       </aside>
@@ -708,8 +756,8 @@ export default function App() {
             ))}
           </div>
           <div className="systemStatus">
-            <span className={liveReady ? "statusDot live" : "statusDot"} />
-            <strong>{liveReady ? "All systems governed" : "Preview mode"}</strong>
+            <span className={liveReady || desktopReady ? "statusDot live" : "statusDot"} />
+            <strong>{liveReady ? "All systems governed" : desktopReady ? "Desktop runtime" : "Preview mode"}</strong>
             <button title="Refresh" type="button" onClick={() => void refresh()}>
               <Activity size={17} />
             </button>
@@ -1097,7 +1145,7 @@ output: evidence hash captured after execution`}</pre>
                   <span>Workspace</span>
                   <strong>{ideDirectory || "Project root"}</strong>
                 </div>
-                <button disabled={!liveReady} title="Refresh files" type="button" onClick={() => void refreshIde()}>
+                <button disabled={!ideRuntimeReady} title="Refresh files" type="button" onClick={() => void refreshIde()}>
                   <Activity size={16} />
                 </button>
               </div>
@@ -1130,11 +1178,11 @@ output: evidence hash captured after execution`}</pre>
                   <small>{activeFileLanguage}</small>
                 </div>
                 <div className="buttonRow">
-                  <button disabled={!liveReady || busy || !activeFilePath} type="button" onClick={() => void openIdeFile(activeFilePath)}>
+                  <button disabled={!ideRuntimeReady || busy || !activeFilePath} type="button" onClick={() => void openIdeFile(activeFilePath)}>
                     <Activity size={16} />
                     Reload
                   </button>
-                  <button disabled={!liveReady || busy || !activeFilePath} type="button" onClick={() => void saveIdeFile()}>
+                  <button disabled={!ideRuntimeReady || busy || !activeFilePath} type="button" onClick={() => void saveIdeFile()}>
                     <FileCheck2 size={16} />
                     Save
                   </button>
@@ -1153,20 +1201,20 @@ output: evidence hash captured after execution`}</pre>
                 <div className="sectionHeader">
                   <div>
                     <span>Terminal</span>
-                    <strong>Local governed runtime</strong>
+                    <strong>{desktopReady ? "Native governed runtime" : "Local governed runtime"}</strong>
                   </div>
-                  <Badge value={liveReady ? "API live" : "offline"} />
+                  <Badge value={desktopReady ? "desktop" : liveReady ? "API live" : "offline"} />
                 </div>
                 <label>
                   <span>Command</span>
                   <input value={ideCommand} onChange={(event) => setIdeCommand(event.target.value)} />
                 </label>
                 <div className="buttonRow">
-                  <button disabled={!liveReady || busy || !ideCommand.trim()} type="button" onClick={() => void runIdeCommand()}>
+                  <button disabled={!ideRuntimeReady || busy || !ideCommand.trim()} type="button" onClick={() => void runIdeCommand()}>
                     <TerminalSquare size={16} />
                     Run
                   </button>
-                  <button disabled={!liveReady || busy || !patchDiff.trim()} type="button" onClick={() => void applyIdePatch()}>
+                  <button disabled={!ideRuntimeReady || busy || !patchDiff.trim()} type="button" onClick={() => void applyIdePatch()}>
                     <Hammer size={16} />
                     Apply patch
                   </button>
@@ -1177,7 +1225,7 @@ output: evidence hash captured after execution`}</pre>
               <div className="ideStatus">
                 <span>Runtime status</span>
                 <strong>{ideMessage}</strong>
-                <small>{liveReady ? API_URL : "Local API required for desktop runtime"}</small>
+                <small>{desktopRuntime?.workspaceRoot || (liveReady ? API_URL : "Desktop app or local API required")}</small>
               </div>
 
               <div className="ideGovernance">

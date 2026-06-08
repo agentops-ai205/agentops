@@ -6,7 +6,8 @@ AgentOps Desktop is the native IDE surface for macOS and Windows. The web app re
 
 - UI: shared React cockpit from `apps/web`.
 - Shell: Tauri v2 in `apps/desktop/src-tauri`.
-- Local runtime: `@agentops/api` local server on `127.0.0.1:3000`.
+- Local runtime: guarded Tauri commands for project files, saves, allowlisted terminal runs and patch apply.
+- Local API: `@agentops/api` on `127.0.0.1:3000` for missions, evidence, audit, policy and cloud sync.
 - Cloud state: Supabase/PostgreSQL through the production API.
 - Web distribution: Netlify for `agentops.ai`.
 - Desktop distribution: signed macOS and Windows installers from CI release artifacts.
@@ -41,6 +42,14 @@ npm run desktop:build
 
 ## Security Boundary
 
-The Tauri shell is intentionally thin. Filesystem, terminal and patch operations are routed through the governed local API so policy, evidence and audit stay consistent across web and desktop surfaces.
+The Tauri shell owns local IDE operations but keeps them project-scoped and explicit:
 
-Protected local paths include `.env*`, `node_modules`, `target`, `dist`, `.agentops/local-store.json` and `.agentops/sandboxes`.
+- Workspace root is discovered from the AgentOps repo or pinned with `AGENTOPS_DESKTOP_WORKSPACE`.
+- Filesystem access rejects absolute paths and path traversal.
+- The editor blocks large files and non-UTF-8 content.
+- Terminal execution uses direct process spawning without a shell.
+- Only allowlisted commands can run from the IDE terminal.
+- Patch application performs `git apply --check --whitespace=nowarn` before mutating files.
+- Runtime secrets such as `DATABASE_URL`, `AGENTOPS_OPERATOR_TOKEN` and `SUPABASE_SERVICE_ROLE_KEY` are stripped from child command environments.
+
+Hidden local paths include `node_modules`, `target`, `dist` and `.DS_Store`.
