@@ -1,0 +1,14 @@
+.DS_Store
+.git
+.github
+.agentops/sandboxes
+.agentops/audit/action-log.jsonl
+node_modules
+target
+apps/*/dist
+packages/*/dist
+npm-debug.log*
+.env
+.env.*
+Dockerfile*
+docker-compose*.yml

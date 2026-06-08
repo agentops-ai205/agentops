@@ -1,0 +1,47 @@
+{
+  "name": "agentops-os",
+  "private": true,
+  "version": "1.0.0",
+  "description": "AgentOps OS - gouvernance, orchestration, audit et evaluation pour agents de codage sous supervision humaine.",
+  "homepage": "https://agentops.ai",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/agentops-ai205/agentops.git"
+  },
+  "bugs": {
+    "url": "https://github.com/agentops-ai205/agentops/issues"
+  },
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,green \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "npm --workspace @agentops/shared run build && npm --workspace @agentops/api run dev",
+    "dev:api:local": "npm --workspace @agentops/shared run build && npm --workspace @agentops/api run dev:local",
+    "dev:local": "concurrently -n api-local,web -c cyan,green \"npm run dev:api:local\" \"npm run dev:web\"",
+    "dev:web": "npm --workspace @agentops/shared run build && npm --workspace @agentops/web run dev -- --host 127.0.0.1",
+    "desktop:dev": "npm --workspace @agentops/desktop run dev",
+    "desktop:build": "npm --workspace @agentops/desktop run build",
+    "desktop:check": "npm --workspace @agentops/desktop run check",
+    "build:core": "cargo build --workspace",
+    "test:core": "cargo test --workspace",
+    "build": "npm run build:core && npm --workspace @agentops/shared run build && npm --workspace @agentops/api run build && npm --workspace @agentops/web run build",
+    "test": "npm run build:core && npm run test:core && npm --workspace @agentops/shared run build && npm --workspace @agentops/api run test",
+    "db:migrate": "npm --workspace @agentops/api run db:migrate",
+    "start": "node scripts/start.mjs",
+    "agentops:init": "npm --workspace @agentops/api run agentops:init",
+    "preflight:prod": "node scripts/production-preflight.mjs",
+    "prod:migrate": "node scripts/apply-production-migrations.mjs",
+    "prod:bootstrap": "node scripts/production-bootstrap.mjs",
+    "prod:smoke": "node scripts/production-smoke.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=20.11.0",
+    "npm": ">=10.0.0"
+  }
+}

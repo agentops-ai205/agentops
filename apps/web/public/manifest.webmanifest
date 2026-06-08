@@ -1,0 +1,19 @@
+{
+  "name": "AgentOps",
+  "short_name": "AgentOps",
+  "description": "AI operations control plane with governed missions, evidence, approvals and IDE workflows.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#070b0d",
+  "theme_color": "#070b0d",
+  "categories": ["productivity", "developer", "business"],
+  "icons": [
+    {
+      "src": "/icons/agentops.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

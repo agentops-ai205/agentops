@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Default AgentOps desktop window capability. Sensitive filesystem and terminal operations are routed through the governed local API.",
+  "windows": ["main"],
+  "permissions": []
+}

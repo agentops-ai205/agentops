@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="AgentOps">
+  <rect width="512" height="512" rx="108" fill="#070b0d"/>
+  <rect x="72" y="72" width="368" height="368" rx="82" fill="url(#g)"/>
+  <path fill="#06120f" d="M278 136h-44l-96 240h48l20-54h100l20 54h50l-98-240Zm-56 144 34-91 34 91h-68Z"/>
+  <circle cx="374" cy="148" r="24" fill="#06120f"/>
+  <defs>
+    <linearGradient id="g" x1="96" y1="76" x2="440" y2="444" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6ffff0"/>
+      <stop offset="1" stop-color="#27ef9a"/>
+    </linearGradient>
+  </defs>
+</svg>

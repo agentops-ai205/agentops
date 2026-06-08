@@ -1,0 +1,1197 @@
+:root {
+  color-scheme: light;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #eef2ef;
+  color: #1c2423;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #d8dfdc;
+  border-radius: 8px;
+  color: #1f2927;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 8px;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 12px;
+}
+
+button:hover:not(:disabled) {
+  border-color: #8eb9ab;
+  color: #0c5f49;
+}
+
+button:disabled {
+  color: #99a29f;
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+input,
+select,
+textarea {
+  background: #ffffff;
+  border: 1px solid #d9e1de;
+  border-radius: 8px;
+  color: #1d2725;
+  min-width: 0;
+  outline: 0;
+  padding: 11px 12px;
+  width: 100%;
+}
+
+select {
+  appearance: none;
+}
+
+textarea {
+  line-height: 1.45;
+  min-height: 96px;
+  resize: vertical;
+}
+
+.appShell {
+  background:
+    linear-gradient(90deg, rgba(55, 173, 198, 0.28), transparent 18%),
+    linear-gradient(110deg, transparent 78%, rgba(244, 185, 55, 0.34)),
+    #eef2ef;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  min-height: 100vh;
+  padding: 12px;
+}
+
+.sidebar {
+  background: rgba(238, 244, 241, 0.74);
+  border: 1px solid rgba(210, 219, 216, 0.8);
+  border-radius: 12px 0 0 12px;
+  display: grid;
+  grid-template-rows: auto auto auto 1fr auto;
+  min-height: calc(100vh - 24px);
+  padding: 18px 14px;
+}
+
+.brandBlock,
+.workspaceUser,
+.topbar,
+.workspaceTabs,
+.systemStatus,
+.panelHeader,
+.repoBar,
+.workTabs,
+.buttonRow,
+.sectionHeader,
+.jobRow,
+.evidenceRow,
+.authStrip,
+.brandButton,
+.searchBox,
+.missionComposer > div {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.brandBlock {
+  justify-content: space-between;
+}
+
+.brandMark,
+.operatorAvatar {
+  align-items: center;
+  background: #21443b;
+  border-radius: 9px;
+  color: #f8fbf8;
+  display: flex;
+  font-weight: 900;
+  justify-content: center;
+}
+
+.brandMark {
+  height: 34px;
+  width: 34px;
+}
+
+.brandButton {
+  background: transparent;
+  border: 0;
+  flex: 1;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.newMissionButton {
+  background: #ffffff;
+  border-color: #e3e9e6;
+  box-shadow: 0 8px 22px rgba(54, 73, 67, 0.08);
+  font-weight: 800;
+  justify-content: flex-start;
+  margin: 22px 0 16px;
+}
+
+.mainNav,
+.sideSection,
+.missionList,
+.agentActions,
+.workSurface,
+.jobList,
+.evidenceList,
+.patchPanel,
+.dashboardPanel,
+.missionPanel,
+.ideGrid,
+.ideExplorer,
+.ideEditor,
+.ideRuntime,
+.metricsGrid,
+.cockpitGrid,
+.agentRunForm,
+.terminalForm,
+.patchForm,
+.evidenceForm,
+.missionModal {
+  display: grid;
+}
+
+.hiddenSurface {
+  display: none;
+}
+
+.mainNav {
+  gap: 4px;
+}
+
+.mainNav button,
+.sideSection button {
+  background: transparent;
+  border: 0;
+  color: #68736f;
+  justify-content: flex-start;
+  min-height: 39px;
+}
+
+.mainNav button.active {
+  background: rgba(36, 68, 60, 0.08);
+  color: #1e332f;
+  font-weight: 850;
+}
+
+.sideSection {
+  align-content: start;
+  border-top: 1px solid rgba(206, 216, 212, 0.75);
+  gap: 4px;
+  margin-top: 20px;
+  padding-top: 18px;
+}
+
+.sideSection > span,
+.panelHeader span,
+.sectionHeader span,
+.workSurface label > span,
+.terminalOutput span,
+.metricTile span {
+  color: #77837f;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.workspaceUser {
+  border-top: 1px solid rgba(206, 216, 212, 0.75);
+  padding-top: 15px;
+}
+
+.workspaceUser strong,
+.workspaceUser span {
+  display: block;
+}
+
+.workspaceUser span {
+  color: #7a8581;
+  font-size: 12px;
+}
+
+.mainSurface {
+  background: rgba(248, 250, 247, 0.78);
+  border: 1px solid rgba(210, 219, 216, 0.8);
+  border-left: 0;
+  border-radius: 0 12px 12px 0;
+  box-shadow: 0 24px 70px rgba(68, 88, 82, 0.18);
+  min-width: 0;
+  overflow: hidden;
+}
+
+.topbar {
+  border-bottom: 1px solid #dce5e1;
+  justify-content: space-between;
+  min-height: 70px;
+  padding: 0 18px;
+}
+
+.workspaceTabs {
+  flex-wrap: wrap;
+}
+
+.workspaceTabs button {
+  background: transparent;
+  border: 0;
+  color: #66726d;
+  min-height: 40px;
+}
+
+.workspaceTabs button.active {
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(55, 75, 69, 0.08);
+  color: #1e342f;
+  font-weight: 850;
+}
+
+.systemStatus {
+  color: #66726d;
+  font-size: 13px;
+}
+
+.statusDot {
+  background: #e4a72e;
+  border-radius: 999px;
+  height: 8px;
+  width: 8px;
+}
+
+.statusDot.live {
+  background: #17a56d;
+}
+
+.systemStatus button {
+  min-height: 34px;
+  min-width: 34px;
+  padding: 0;
+}
+
+.operatorAvatar {
+  background: #dc7f3d;
+  height: 34px;
+  width: 34px;
+}
+
+.authStrip {
+  background: #fff7e2;
+  border-bottom: 1px solid #ead8aa;
+  padding: 12px 18px;
+}
+
+.authStrip input {
+  max-width: 360px;
+}
+
+.cockpitGrid {
+  gap: 12px;
+  grid-template-columns: minmax(250px, 0.9fr) minmax(300px, 1.12fr) minmax(250px, 1fr);
+  min-height: calc(100vh - 94px);
+  padding: 12px;
+}
+
+.missionPanel,
+.patchPanel,
+.dashboardPanel {
+  align-content: start;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid #dce5e1;
+  border-radius: 8px;
+  max-height: calc(100vh - 118px);
+  min-width: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 18px;
+}
+
+.missionPanel *,
+.patchPanel *,
+.dashboardPanel * {
+  min-width: 0;
+}
+
+.missionPanel {
+  gap: 16px;
+}
+
+.patchPanel,
+.dashboardPanel {
+  gap: 14px;
+}
+
+.panelHeader {
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.panelHeader > div {
+  flex: 1 1 180px;
+}
+
+.patchPanel > *,
+.missionPanel > *,
+.dashboardPanel > * {
+  max-width: 100%;
+  width: 100%;
+}
+
+.panelHeader h1,
+.panelHeader h2,
+.panelHeader p {
+  margin: 0;
+}
+
+.panelHeader h1 {
+  font-size: 25px;
+  line-height: 1.08;
+  margin-top: 18px;
+}
+
+.panelHeader h2 {
+  font-size: 18px;
+  line-height: 1.2;
+  margin-top: 4px;
+}
+
+.panelHeader p {
+  color: #6c7873;
+  font-size: 14px;
+  line-height: 1.45;
+  margin-top: 7px;
+}
+
+.panelHeader.compact {
+  align-items: flex-start;
+}
+
+.searchBox {
+  background: #ffffff;
+  border: 1px solid #dce4e1;
+  border-radius: 8px;
+  padding: 0 11px;
+}
+
+.searchBox input {
+  border: 0;
+  padding-left: 0;
+}
+
+.missionList {
+  gap: 9px;
+}
+
+.missionItem {
+  background: #ffffff;
+  border-color: #e0e7e4;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 34px minmax(0, 1fr);
+  justify-content: stretch;
+  min-height: 72px;
+  padding: 10px;
+  text-align: left;
+}
+
+.missionItem .badge {
+  grid-column: 2;
+  justify-self: start;
+}
+
+.missionItem.active {
+  border-color: #8bb9ab;
+  box-shadow: 0 0 0 2px rgba(24, 133, 97, 0.1);
+}
+
+.missionItem > span,
+.jobRow > svg {
+  align-items: center;
+  background: #ecf5f0;
+  border-radius: 8px;
+  color: #167556;
+  display: flex;
+  height: 34px;
+  justify-content: center;
+  width: 34px;
+}
+
+.missionItem strong,
+.missionItem small {
+  display: block;
+}
+
+.missionItem small {
+  color: #72807a;
+  font-size: 12px;
+  line-height: 1.35;
+  max-height: 34px;
+  overflow: hidden;
+}
+
+.agentActions {
+  gap: 9px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.actionCard {
+  align-items: center;
+  background: #ffffff;
+  border-color: #e0e7e4;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  justify-content: stretch;
+  min-height: 66px;
+  padding: 10px;
+  text-align: left;
+}
+
+.actionCard > svg:first-child {
+  color: #188561;
+}
+
+.actionCard strong,
+.actionCard span {
+  display: block;
+}
+
+.actionCard span {
+  color: #77837f;
+  font-size: 12px;
+}
+
+.missionComposer {
+  background: #ffffff;
+  border: 1px solid #dce4e1;
+  border-radius: 10px;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.missionComposer textarea {
+  border: 0;
+  min-height: 70px;
+  padding: 4px;
+}
+
+.missionComposer > div {
+  justify-content: space-between;
+}
+
+.missionComposer button {
+  min-height: 36px;
+  min-width: 36px;
+  padding: 0;
+}
+
+.sendButton {
+  background: #1f463d;
+  color: #ffffff;
+}
+
+.repoBar {
+  background: #f4f7f5;
+  border: 1px solid #e0e7e4;
+  border-radius: 8px;
+  min-height: 42px;
+  padding: 0 12px;
+  width: 100%;
+}
+
+.repoBar strong {
+  flex: 1;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.repoBar span {
+  color: #65736e;
+  font-size: 12px;
+}
+
+.workTabs {
+  border-bottom: 1px solid #dce4e1;
+  flex-wrap: nowrap;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  width: 100%;
+}
+
+.workTabs button {
+  background: transparent;
+  border: 0;
+  border-radius: 8px 8px 0 0;
+  color: #697772;
+  flex: 0 0 auto;
+  padding: 0 10px;
+}
+
+.workTabs button.active {
+  background: #eef6f2;
+  color: #176d52;
+  font-weight: 850;
+}
+
+.workSurface {
+  min-height: 390px;
+}
+
+.agentRunForm,
+.terminalForm,
+.patchForm,
+.evidenceForm {
+  gap: 12px;
+}
+
+.fieldGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+}
+
+.workSurface label,
+.missionModal label {
+  display: grid;
+  gap: 7px;
+}
+
+.diffInput,
+.terminalForm pre {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+.diffInput {
+  min-height: 210px;
+}
+
+.terminalForm pre {
+  background: #17211e;
+  border-radius: 8px;
+  color: #d9e8e1;
+  line-height: 1.55;
+  margin: 0;
+  overflow: auto;
+  padding: 14px;
+  white-space: pre-wrap;
+}
+
+.buttonRow {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.buttonRow button:last-child,
+.authStrip button {
+  background: #1f463d;
+  border-color: #1f463d;
+  color: #ffffff;
+}
+
+.terminalOutput {
+  background: #f6f8f6;
+  border: 1px solid #e0e7e4;
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+
+.terminalOutput strong {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.terminalOutput small {
+  color: #77837f;
+}
+
+.browserChrome {
+  align-items: center;
+  background: #f4f7f5;
+  border: 1px solid #e0e7e4;
+  border-radius: 8px;
+  display: flex;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 10px;
+}
+
+.browserChrome span {
+  background: #cbd5d1;
+  border-radius: 999px;
+  height: 9px;
+  width: 9px;
+}
+
+.browserChrome strong {
+  flex: 1;
+  font-size: 13px;
+  margin-left: 8px;
+}
+
+.browserChrome button {
+  color: #176d52;
+  font-size: 12px;
+  min-height: 28px;
+}
+
+.metricsGrid {
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.metricTile {
+  background: #ffffff;
+  border: 1px solid #e0e7e4;
+  border-radius: 8px;
+  display: grid;
+  gap: 5px;
+  min-height: 86px;
+  padding: 12px;
+}
+
+.metricTile strong {
+  font-size: 23px;
+  line-height: 1;
+}
+
+.metricTile em {
+  color: #167556;
+  font-size: 12px;
+  font-style: normal;
+}
+
+.metricTile.amber em {
+  color: #a66c11;
+}
+
+.chartPanel,
+.jobsPanel,
+.approvalPanel,
+.evidencePanel {
+  background: #ffffff;
+  border: 1px solid #e0e7e4;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.chartPanel > div {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+}
+
+.chartPanel strong,
+.sectionHeader strong {
+  display: block;
+  font-size: 14px;
+}
+
+.throughputChart {
+  display: block;
+  height: 160px;
+  margin-top: 10px;
+  width: 100%;
+}
+
+.throughputChart path {
+  fill: none;
+  stroke: #edf1ef;
+  stroke-width: 1;
+}
+
+.throughputChart polyline {
+  fill: none;
+  stroke: #4f85c7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 4;
+}
+
+.throughputChart circle {
+  fill: #ffffff;
+  stroke: #4f85c7;
+  stroke-width: 3;
+}
+
+.sectionHeader {
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.sectionHeader button {
+  min-height: 34px;
+}
+
+.approvalActions {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.approvalActions button:first-child {
+  background: #1f463d;
+  border-color: #1f463d;
+  color: #ffffff;
+}
+
+.approvalActions button:nth-child(2) {
+  background: #fff7e2;
+  border-color: #ead8aa;
+  color: #8a6415;
+}
+
+.approvalActions button:nth-child(3) {
+  background: #fff0ed;
+  border-color: #efc4bb;
+  color: #9b3727;
+}
+
+.jobList,
+.evidenceList {
+  gap: 8px;
+}
+
+.jobRow,
+.evidenceRow {
+  border-top: 1px solid #edf1ef;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  min-height: 54px;
+  padding-top: 8px;
+}
+
+.jobRow strong,
+.jobRow span,
+.evidenceRow strong,
+.evidenceRow span {
+  display: block;
+}
+
+.jobRow span,
+.evidenceRow span,
+.evidenceRow time {
+  color: #78847f;
+  font-size: 12px;
+}
+
+.evidenceRow svg {
+  color: #188561;
+  margin-top: 2px;
+}
+
+.ideGrid {
+  gap: 12px;
+  grid-template-columns: 250px minmax(420px, 1fr) 360px;
+  min-height: calc(100vh - 94px);
+  padding: 12px;
+}
+
+.ideExplorer,
+.ideEditor,
+.ideRuntime {
+  align-content: start;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid #dce5e1;
+  border-radius: 8px;
+  max-height: calc(100vh - 118px);
+  min-width: 0;
+  overflow: hidden;
+  padding: 14px;
+}
+
+.ideExplorer,
+.ideRuntime {
+  gap: 12px;
+}
+
+.ideEditor {
+  grid-template-rows: auto minmax(0, 1fr);
+  padding: 0;
+}
+
+.fileTree {
+  display: grid;
+  gap: 5px;
+  max-height: calc(100vh - 210px);
+  overflow: auto;
+  padding-right: 3px;
+}
+
+.fileRow {
+  background: transparent;
+  border: 0;
+  color: #53615d;
+  display: grid;
+  font-size: 13px;
+  grid-template-columns: 22px minmax(0, 1fr);
+  justify-content: stretch;
+  min-height: 34px;
+  padding: 0 6px;
+  text-align: left;
+}
+
+.fileRow span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fileRow.directory {
+  color: #205c4b;
+  font-weight: 800;
+}
+
+.fileRow:hover {
+  background: #eef6f2;
+}
+
+.ideEditorHeader {
+  align-items: center;
+  border-bottom: 1px solid #dce5e1;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  min-height: 62px;
+  padding: 10px 14px;
+}
+
+.ideEditorHeader > div:first-child {
+  min-width: 0;
+}
+
+.ideEditorHeader span,
+.terminalCard label span,
+.ideStatus span,
+.ideGovernance span,
+.ideEditorHeader small {
+  color: #77837f;
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ideEditorHeader strong {
+  display: block;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ideEditorHeader small {
+  display: block;
+  margin-top: 3px;
+}
+
+.codeEditor {
+  background: #17211e;
+  border: 0;
+  border-radius: 0;
+  color: #e7f0eb;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  line-height: 1.55;
+  min-height: 620px;
+  outline: 0;
+  padding: 16px;
+  resize: none;
+}
+
+.terminalCard,
+.ideStatus,
+.ideGovernance {
+  background: #ffffff;
+  border: 1px solid #e0e7e4;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.terminalCard {
+  display: grid;
+  gap: 10px;
+}
+
+.terminalCard pre {
+  background: #17211e;
+  border-radius: 8px;
+  color: #dcebe5;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 0;
+  max-height: 320px;
+  overflow: auto;
+  padding: 12px;
+  white-space: pre-wrap;
+}
+
+.ideStatus {
+  display: grid;
+  gap: 4px;
+}
+
+.ideStatus strong {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.ideStatus small {
+  color: #77837f;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ideGovernance {
+  display: grid;
+  gap: 10px;
+}
+
+.ideGovernance > div {
+  align-items: center;
+  display: grid;
+  gap: 4px 9px;
+  grid-template-columns: 24px minmax(0, 1fr);
+}
+
+.ideGovernance svg {
+  color: #188561;
+  grid-row: span 2;
+}
+
+.ideGovernance strong {
+  font-size: 13px;
+}
+
+.badge {
+  align-items: center;
+  border: 1px solid #d7e3de;
+  border-radius: 999px;
+  color: #52615c;
+  display: inline-flex;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 900;
+  justify-content: center;
+  min-height: 24px;
+  padding: 4px 9px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.badge.in-progress,
+.badge.approved,
+.badge.succeeded,
+.badge.allow,
+.badge.api-live {
+  background: #e7f6ef;
+  border-color: #b7dece;
+  color: #116c50;
+}
+
+.badge.waiting-approval,
+.badge.require-review,
+.badge.require-approval,
+.badge.running,
+.badge.medium,
+.badge.queued {
+  background: #fff7e2;
+  border-color: #ead8aa;
+  color: #8a6415;
+}
+
+.badge.deny,
+.badge.failed,
+.badge.blocked,
+.badge.risk-rejected {
+  background: #fff0ed;
+  border-color: #efc4bb;
+  color: #9b3727;
+}
+
+.modalBackdrop {
+  align-items: center;
+  background: rgba(31, 41, 39, 0.22);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 20px;
+  position: fixed;
+  z-index: 30;
+}
+
+.missionModal {
+  background: #ffffff;
+  border: 1px solid #dce4e1;
+  border-radius: 10px;
+  box-shadow: 0 24px 80px rgba(48, 68, 62, 0.24);
+  gap: 14px;
+  max-width: 560px;
+  padding: 18px;
+  width: min(100%, 560px);
+}
+
+.missionModal .sectionHeader {
+  margin-bottom: 0;
+}
+
+.missionModal .sectionHeader button {
+  min-width: 34px;
+  padding: 0;
+}
+
+@media (max-width: 980px) {
+  .cockpitGrid {
+    grid-template-columns: minmax(290px, 0.86fr) minmax(360px, 1.1fr);
+  }
+
+  .ideGrid {
+    grid-template-columns: 240px minmax(360px, 1fr);
+  }
+
+  .ideRuntime {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dashboardPanel {
+    grid-column: 1 / -1;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 1040px) {
+  .appShell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    border-radius: 12px 12px 0 0;
+    grid-row: 2;
+    grid-template-rows: auto;
+    min-height: 0;
+  }
+
+  .mainSurface {
+    border-left: 1px solid rgba(210, 219, 216, 0.8);
+    border-radius: 0 0 12px 12px;
+    grid-row: 1;
+  }
+
+  .mainNav,
+  .sideSection {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .workspaceUser {
+    margin-top: 12px;
+  }
+}
+
+@media (max-width: 860px) {
+  .topbar {
+    align-items: stretch;
+    flex-direction: column;
+    min-height: 0;
+    padding: 12px;
+  }
+
+  .cockpitGrid,
+  .ideGrid,
+  .dashboardPanel {
+    grid-template-columns: 1fr;
+  }
+
+  .missionPanel,
+  .patchPanel,
+  .dashboardPanel,
+  .ideExplorer,
+  .ideEditor,
+  .ideRuntime {
+    max-height: none;
+    overflow: visible;
+  }
+
+  .codeEditor {
+    min-height: 460px;
+  }
+
+  .metricsGrid,
+  .agentActions,
+  .fieldGrid,
+  .approvalActions,
+  .mainNav,
+  .sideSection {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 540px) {
+  .appShell {
+    padding: 8px;
+  }
+
+  .cockpitGrid {
+    padding: 10px;
+  }
+
+  .ideGrid {
+    padding: 10px;
+  }
+
+  .metricsGrid,
+  .agentActions,
+  .approvalActions,
+  .mainNav,
+  .sideSection {
+    grid-template-columns: 1fr;
+  }
+
+  .workTabs {
+    flex-wrap: wrap;
+    overflow-x: hidden;
+  }
+
+  .missionItem,
+  .jobRow,
+  .evidenceRow {
+    grid-template-columns: 30px minmax(0, 1fr);
+  }
+
+  .missionItem .badge,
+  .jobRow .badge,
+  .evidenceRow time {
+    grid-column: 2;
+    justify-self: start;
+  }
+}
