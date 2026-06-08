@@ -78,6 +78,26 @@ interface Overview {
   jobs: Row[];
 }
 
+interface LiveStatus {
+  ok: boolean;
+  service: string;
+  environment: string;
+}
+
+interface HealthStatus {
+  ok: boolean;
+  service: string;
+  environment: string;
+  database: string;
+  checks: {
+    database: boolean;
+    rust_core: boolean;
+    default_organization: boolean;
+    policy_engine: string;
+    sandbox_engine: string;
+  };
+}
+
 interface MissionView {
   id: string;
   title: string;
@@ -187,6 +207,9 @@ export default function App() {
   const [tools, setTools] = useState<Row[]>([]);
   const [providers, setProviders] = useState<Row[]>([]);
   const [status, setStatus] = useState("Connecting API...");
+  const [liveStatus, setLiveStatus] = useState<LiveStatus | null>(null);
+  const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null);
+  const [lastCheckedAt, setLastCheckedAt] = useState("");
   const [selectedMissionId, setSelectedMissionId] = useState(previewMissions[0].id);
   const [missionSearch, setMissionSearch] = useState("");
   const [operatorToken, setOperatorTokenState] = useState(() => getOperatorToken());
@@ -222,6 +245,14 @@ export default function App() {
   const [ideMessage, setIdeMessage] = useState("Desktop IDE runtime pending.");
 
   async function refresh() {
+    const [liveData, healthData] = await Promise.all([
+      api<LiveStatus>("/live").catch(() => null),
+      api<HealthStatus>("/health").catch(() => null)
+    ]);
+    setLiveStatus(liveData);
+    setHealthStatus(healthData);
+    setLastCheckedAt(new Date().toISOString());
+
     try {
       const [overviewData, toolData, providerData] = await Promise.all([
         api<Overview>("/v1/overview"),
@@ -232,11 +263,14 @@ export default function App() {
       setTools(toolData);
       setProviders(providerData);
       setStatus(`Live API: ${API_URL}`);
+      setAuthRequired(false);
     } catch (error) {
       if (error instanceof ApiClientError && error.status === 401) {
         saveOperatorToken("");
         setOperatorTokenState("");
         setAuthRequired(true);
+        setStatus(healthData?.ok ? "Operator token required" : "Preview mode - backend pending");
+        return;
       }
       setStatus("Preview mode - backend pending");
     }
@@ -247,6 +281,11 @@ export default function App() {
   }, []);
 
   const liveReady = status.startsWith("Live API");
+  const apiReachable = Boolean(liveStatus?.ok);
+  const databaseReady = healthStatus?.checks.database === true;
+  const operatorUnlocked = liveReady && Boolean(operatorToken);
+  const policyEngine = healthStatus?.checks.policy_engine || "unknown";
+  const sandboxEngine = healthStatus?.checks.sandbox_engine || "unknown";
   const desktopIdeActive = activeWorkspaceTab === "Desktop IDE";
   const missions = overview.missions.length ? overview.missions.map(toMissionView) : previewMissions;
   const filteredMissions = useMemo(() => {
@@ -433,6 +472,20 @@ export default function App() {
         }),
       "Evidence attached and hashed."
     );
+  }
+
+  function bootstrapControlPlane() {
+    void runControlAction(
+      () => api("/v1/bootstrap", { method: "POST" }),
+      "Bootstrap completed and production seed data verified."
+    );
+  }
+
+  function clearOperatorToken() {
+    saveOperatorToken("");
+    setOperatorTokenState("");
+    setAuthRequired(true);
+    setStatus(apiReachable ? "Operator token required" : "Preview mode - backend pending");
   }
 
   async function refreshIde(directory = ideDirectory) {
@@ -679,6 +732,55 @@ export default function App() {
             </button>
           </form>
         )}
+
+        <section className="productionStrip" aria-label="Production control">
+          <ProductionStat
+            icon={<Activity size={17} />}
+            label="API"
+            tone={apiReachable ? "green" : "amber"}
+            value={apiReachable ? healthStatus?.environment || liveStatus?.environment || "live" : "offline"}
+          />
+          <ProductionStat
+            icon={<BadgeCheck size={17} />}
+            label="Database"
+            tone={databaseReady ? "green" : "amber"}
+            value={databaseReady ? healthStatus?.database || "postgresql" : "pending"}
+          />
+          <ProductionStat
+            icon={<KeyRound size={17} />}
+            label="Operator"
+            tone={operatorUnlocked ? "green" : "amber"}
+            value={operatorUnlocked ? "unlocked" : authRequired ? "locked" : "checking"}
+          />
+          <ProductionStat
+            icon={<ShieldCheck size={17} />}
+            label="Engines"
+            tone={healthStatus?.ok ? "green" : "amber"}
+            value={`${policyEngine} / ${sandboxEngine}`}
+          />
+          <ProductionStat
+            icon={<Clock3 size={17} />}
+            label="Last check"
+            tone={apiReachable ? "green" : "amber"}
+            value={formatDateTime(lastCheckedAt)}
+          />
+          <div className="productionActions">
+            <button disabled={busy} title="Refresh status" type="button" onClick={() => void refresh()}>
+              <Activity size={16} />
+              Check
+            </button>
+            <button disabled={busy || !operatorUnlocked} title="Bootstrap control plane" type="button" onClick={bootstrapControlPlane}>
+              <BadgeCheck size={16} />
+              Bootstrap
+            </button>
+            {operatorToken && (
+              <button title="Lock operator session" type="button" onClick={clearOperatorToken}>
+                <KeyRound size={16} />
+                Lock
+              </button>
+            )}
+          </div>
+        </section>
 
         <section className={desktopIdeActive ? "cockpitGrid hiddenSurface" : "cockpitGrid"}>
           <section className="missionPanel">
@@ -1162,6 +1264,16 @@ function MetricTile(props: { label: string; value: string | number; trend?: stri
   );
 }
 
+function ProductionStat(props: { icon: ReactElement; label: string; value: string; tone: "green" | "amber" }) {
+  return (
+    <div className={`productionStat ${props.tone}`}>
+      {props.icon}
+      <span>{props.label}</span>
+      <strong>{props.value}</strong>
+    </div>
+  );
+}
+
 function ThroughputChart() {
   const points = "0,94 34,78 68,82 102,62 136,70 170,48 204,54 238,34 272,42 306,24 340,18";
   return (
@@ -1273,6 +1385,17 @@ function formatTime(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "now";
   return new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" }).format(date);
+}
+
+function formatDateTime(value: string) {
+  if (!value) return "pending";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "pending";
+  return new Intl.DateTimeFormat("en", {
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit"
+  }).format(date);
 }
 
 function slugClass(value: string) {
