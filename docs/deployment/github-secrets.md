@@ -5,7 +5,7 @@ Set these values in the `agentops-ai205/agentops` GitHub repository before runni
 ## GitHub Actions
 
 - `NETLIFY_AUTH_TOKEN`: Netlify personal access token used only for web deploy.
-- `NETLIFY_SITE_ID`: Netlify site id for `agentops.ai`.
+- `NETLIFY_SITE_ID`: Netlify site id for `capable-cat-f6133c`.
 
 Desktop signing secrets are required only for public signed installers:
 
@@ -30,8 +30,8 @@ The API host must receive these runtime secrets directly in its dashboard:
 
 - `DATABASE_URL`: Supabase PostgreSQL connection string.
 - `AGENTOPS_OPERATOR_TOKEN`: long random operator token, at least 32 characters.
-- `AGENTOPS_ALLOWED_ORIGINS=https://agentops.ai,https://www.agentops.ai,https://agentops-ai205.netlify.app`
-- `VITE_API_URL=https://agentops-ai205.netlify.app/api` now, then `https://api.agentops.ai` after the API domain is live.
+- `AGENTOPS_ALLOWED_ORIGINS=https://capable-cat-f6133c.netlify.app,https://agentops.ai,https://www.agentops.ai`
+- `VITE_API_URL=https://capable-cat-f6133c.netlify.app/api` now, then `https://api.agentops.ai` after the API domain is live.
 
 ## Supabase
 
@@ -39,5 +39,6 @@ Use project `elotpgbijlaqopcmdxac` and apply:
 
 - `apps/api/migrations/0001_agentops.sql`
 - `apps/api/migrations/0002_supabase_ready_tenancy.sql`
+- `apps/api/migrations/0003_supabase_rls.sql`
 
 After the API is deployed, call `POST /v1/bootstrap` once with the operator token.

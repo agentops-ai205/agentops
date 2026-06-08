@@ -1,8 +1,12 @@
 import { argValue } from "./env-utils.mjs";
 
 const args = process.argv.slice(2);
-const apiUrl = stripTrailingSlash(argValue(args, "--api", process.env.AGENTOPS_API_URL || "https://api.agentops.ai"));
-const webUrl = stripTrailingSlash(argValue(args, "--web", process.env.AGENTOPS_WEB_URL || "https://agentops.ai"));
+const apiUrl = stripTrailingSlash(
+  argValue(args, "--api", process.env.AGENTOPS_API_URL || "https://capable-cat-f6133c.netlify.app/api")
+);
+const webUrl = stripTrailingSlash(
+  argValue(args, "--web", process.env.AGENTOPS_WEB_URL || "https://capable-cat-f6133c.netlify.app")
+);
 const operatorToken = process.env.AGENTOPS_OPERATOR_TOKEN;
 
 const checks = [];

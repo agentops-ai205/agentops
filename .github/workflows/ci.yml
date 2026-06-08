@@ -2,9 +2,9 @@ name: AgentOps CI
 
 on:
   push:
-    branches: ["main"]
+    branches: ["codex/agentops-v3-production"]
   pull_request:
-    branches: ["main"]
+    branches: ["codex/agentops-v3-production"]
 
 jobs:
   verify:

@@ -4,7 +4,7 @@ AgentOps uses PostgreSQL as the canonical system of record. Supabase can host th
 
 ## Required Environment
 
-- `DATABASE_URL`: Supabase pooled or direct PostgreSQL URL.
+- `DATABASE_URL`: Supabase pooled or direct PostgreSQL URL. Netlify Functions must use `sslmode=require`.
 - `AGENTOPS_DEFAULT_ORGANIZATION_ID`: default tenant boundary, usually `org.default` for single-tenant deployments.
 - `AGENTOPS_POLICY_ENGINE=rust_core`
 - `AGENTOPS_SANDBOX_ENGINE=rust_core`
@@ -35,3 +35,10 @@ The production web app should still call the AgentOps API instead of using brows
 2. Apply `0002_supabase_ready_tenancy.sql`.
 3. Apply `0003_supabase_rls.sql`.
 4. Run `/v1/bootstrap` once from a controlled operator context.
+
+## Production Backup Posture
+
+- Keep Supabase managed backups enabled.
+- Export schema and data, or create a dashboard restore point, before destructive schema changes.
+- Store every production schema change as a migration file under `apps/api/migrations`.
+- Record release evidence after migration: migration list, `/api/health`, and RLS coverage.

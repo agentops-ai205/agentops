@@ -14,6 +14,15 @@ for (let index = 2; index < process.argv.length; index += 1) {
 
 const envPath = path.resolve(args.get("--env") || "deploy/production.env");
 const allowPlaceholders = Boolean(args.get("--allow-placeholders"));
+const acceptedWebOrigins = [
+  "https://capable-cat-f6133c.netlify.app",
+  "https://agentops.ai",
+  "https://www.agentops.ai"
+];
+const acceptedApiUrls = [
+  "https://capable-cat-f6133c.netlify.app/api",
+  "https://api.agentops.ai"
+];
 const root = process.cwd();
 const requiredFiles = [
   "Dockerfile.api",
@@ -90,15 +99,13 @@ checks.push({
 
 const origins = splitCsv(env.AGENTOPS_ALLOWED_ORIGINS);
 checks.push({
-  ok: origins.includes("https://agentops.ai") && origins.includes("https://www.agentops.ai"),
+  ok: acceptedWebOrigins.some((origin) => origins.includes(origin)),
   name: "env:AGENTOPS_ALLOWED_ORIGINS",
   message: origins.join(",")
 });
 
 checks.push({
-  ok: ["https://api.agentops.ai", "https://agentops-ai205.netlify.app/api"].includes(
-    env.VITE_API_URL ?? ""
-  ),
+  ok: acceptedApiUrls.includes(env.VITE_API_URL ?? ""),
   name: "env:VITE_API_URL",
   message: mask(env.VITE_API_URL)
 });

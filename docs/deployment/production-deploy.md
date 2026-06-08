@@ -8,9 +8,10 @@ Target accounts:
 
 Target public surface:
 
-- Web: `https://agentops.ai`
-- API: `https://agentops-ai205.netlify.app/api` now, then `https://api.agentops.ai`
-- Temporary web preview: `https://agentops-ai205.netlify.app`
+- Web now: `https://capable-cat-f6133c.netlify.app`
+- API now: `https://capable-cat-f6133c.netlify.app/api`
+- Future custom domain: `https://agentops.ai`
+- Future API domain: `https://api.agentops.ai`
 
 ## Build Gates
 
@@ -26,7 +27,7 @@ docker build -f Dockerfile.web -t agentops-web:local .
 
 ## GitHub
 
-Create the repository under `agentops-ai205`, push the monorepo, then enable GitHub Actions. The included workflow runs Rust tests, API tests, production builds, and Docker image builds.
+The repository is `agentops-ai205/agentops`. The default branch is `codex/agentops-v3-production`; keep production changes flowing through that branch. The included workflow runs Rust tests, API tests, production builds, and Docker image builds.
 
 Repository URL:
 
@@ -40,6 +41,8 @@ Production release workflow:
 - Deploys the web app to Netlify when `NETLIFY_AUTH_TOKEN` and `NETLIFY_SITE_ID` exist.
 
 Required GitHub/Netlify/API secrets are listed in `docs/deployment/github-secrets.md`.
+
+Day-two operations, incident response and release evidence are tracked in `docs/deployment/production-operations.md`.
 
 ## Supabase
 
@@ -63,15 +66,15 @@ Use `netlify.toml`. Set:
 
 - Build command: from `netlify.toml`
 - Publish directory: `apps/web/dist`
-- `VITE_API_URL=https://agentops-ai205.netlify.app/api` until `api.agentops.ai` is live.
+- `VITE_API_URL=https://capable-cat-f6133c.netlify.app/api` until `api.agentops.ai` is live.
 
-`netlify.toml` already pins `VITE_API_URL=https://agentops-ai205.netlify.app/api` so a Netlify deploy cannot accidentally ship a frontend pointing at `127.0.0.1`.
+`netlify.toml` already pins `VITE_API_URL=https://capable-cat-f6133c.netlify.app/api` so a Netlify deploy cannot accidentally ship a frontend pointing at `127.0.0.1`.
 
 Custom domain:
 
 1. Add `agentops.ai` and `www.agentops.ai` to the Netlify site.
 2. Point DNS for `agentops.ai` to Netlify as instructed by Netlify.
-3. Keep `agentops-ai205.netlify.app` as a temporary preview URL only.
+3. Keep `capable-cat-f6133c.netlify.app` as the temporary production URL until the custom domain is attached.
 4. Do not present the Netlify preview URL as the product URL.
 
 ## API Container
