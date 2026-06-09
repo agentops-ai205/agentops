@@ -28,6 +28,7 @@ Manual API checks:
 
 - `GET /api/live` must return `ok: true`.
 - `GET /api/health` must return `ok: true` and `checks.database: true`.
+- `GET /api/ready` is retried by release smoke tests. On Netlify Functions it is advisory unless `--require-rust-core` is set.
 - `checks.policy_engine` and `checks.sandbox_engine` are expected to be `typescript` on Netlify Functions until the containerized Rust worker path is live.
 - On the API container, `checks.rust_core` must be `true` and readiness must fail if `rust_core_strict` is configured without the Rust binary.
 
