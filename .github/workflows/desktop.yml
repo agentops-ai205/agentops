@@ -138,6 +138,9 @@ jobs:
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ env.APPLE_SIGNING_IDENTITY }}
         run: |
+          if [ "${APPLE_SIGNING_ENABLED:-false}" != "true" ]; then
+            unset APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY
+          fi
           for attempt in 1 2; do
             rm -rf apps/desktop/src-tauri/target/release/bundle desktop-artifacts
             if npm run desktop:build; then
