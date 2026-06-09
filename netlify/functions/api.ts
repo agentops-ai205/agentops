@@ -1,4 +1,5 @@
 import { buildApp, bootstrapApplication } from "../../apps/api/src/app";
+import type { FastifyInstance } from "fastify";
 
 type HeaderValue = string | number | string[] | undefined;
 
@@ -9,15 +10,20 @@ interface NetlifyEvent {
   queryStringParameters?: Record<string, string | null>;
   headers?: Record<string, string | undefined>;
   body?: string | null;
+  blobs?: string;
   isBase64Encoded?: boolean;
 }
 
-let appPromise: ReturnType<typeof buildApp> | undefined;
+let appPromise: Promise<FastifyInstance> | undefined;
 let bootstrapPromise: Promise<unknown> | undefined;
 
-async function getApp() {
+async function getApp(event: NetlifyEvent) {
+  await connectNetlifyBlobContext(event);
+
   if (!appPromise) {
-    appPromise = buildApp();
+    appPromise = usesNetlifyBlobStorage()
+      ? import("../../apps/api/src/localServer").then((module) => module.prepareLocalApp())
+      : buildApp();
   }
 
   const app = await appPromise;
@@ -27,9 +33,9 @@ async function getApp() {
 
 export async function handler(event: NetlifyEvent) {
   const path = normalizePath(event.path);
-  const app = await getApp();
+  const app = await getApp(event);
 
-  if (shouldBootstrap(path)) {
+  if (!usesNetlifyBlobStorage() && shouldBootstrap(path)) {
     await ensureBootstrapped();
   }
 
@@ -62,6 +68,16 @@ async function ensureBootstrapped() {
 
 function shouldBootstrap(path: string) {
   return path !== "/live";
+}
+
+function usesNetlifyBlobStorage() {
+  return process.env.AGENTOPS_STORAGE_ENGINE === "netlify_blobs";
+}
+
+async function connectNetlifyBlobContext(event: NetlifyEvent) {
+  if (!usesNetlifyBlobStorage() || !event.blobs) return;
+  const { connectLambda } = await import("@netlify/blobs");
+  connectLambda({ blobs: event.blobs, headers: event.headers ?? {} });
 }
 
 function normalizePath(path: string) {

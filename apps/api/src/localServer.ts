@@ -44,6 +44,8 @@ interface LocalStore {
 
 const storePath =
   process.env.AGENTOPS_LOCAL_STORE_PATH ?? path.join(config.projectRoot, ".agentops/local-store.json");
+const blobStoreName = process.env.AGENTOPS_BLOBS_STORE ?? "agentops-production";
+const blobStoreKey = process.env.AGENTOPS_BLOBS_STORE_KEY ?? "local-store.json";
 const fileReadLimitBytes = 512_000;
 const terminalOutputLimitBytes = 80_000;
 const terminalTimeoutMs = 45_000;
@@ -112,9 +114,9 @@ app.get("/live", async () => ({
 const localReadiness = {
   ok: true,
   service: "agentops-local-api",
-  environment: "local_file",
-  database: "local_json",
-  store_path: storePath,
+  environment: useBlobStore() ? "netlify_blobs" : "local_file",
+  database: useBlobStore() ? "netlify_blobs" : "local_json",
+  store_path: useBlobStore() ? `${blobStoreName}/${blobStoreKey}` : storePath,
   checks: {
     database: true,
     auth_schema: true,
@@ -872,8 +874,20 @@ app.post("/v1/improvements/:id/apply", async (request) => {
   return store.improvements.find((item) => item.id === id);
 });
 
-await ensureStore();
-await app.listen({ host: config.host, port: config.port });
+let appPrepared = false;
+
+export async function prepareLocalApp() {
+  if (!appPrepared) {
+    await ensureStore();
+    appPrepared = true;
+  }
+  return app;
+}
+
+if (isLocalServerEntrypoint()) {
+  await prepareLocalApp();
+  await app.listen({ host: config.host, port: config.port });
+}
 
 async function mutate(mutator: (store: LocalStore) => void | Promise<void>) {
   const store = await loadStore();
@@ -888,6 +902,12 @@ async function ensureStore() {
 }
 
 async function loadStore(): Promise<LocalStore> {
+  if (useBlobStore()) {
+    const blob = await agentopsBlobStore();
+    const store = await blob.get(blobStoreKey, { consistency: "strong", type: "json" });
+    return store ? normalizeStore(store as LocalStore) : seedStore();
+  }
+
   try {
     return normalizeStore(JSON.parse(await readFile(storePath, "utf8")) as LocalStore);
   } catch {
@@ -896,8 +916,28 @@ async function loadStore(): Promise<LocalStore> {
 }
 
 async function saveStore(store: LocalStore) {
+  if (useBlobStore()) {
+    const blob = await agentopsBlobStore();
+    await blob.setJSON(blobStoreKey, store);
+    return;
+  }
+
   await mkdir(path.dirname(storePath), { recursive: true });
   await writeFile(storePath, `${JSON.stringify(store, null, 2)}\n`);
+}
+
+function useBlobStore() {
+  return process.env.AGENTOPS_STORAGE_ENGINE === "netlify_blobs";
+}
+
+async function agentopsBlobStore() {
+  const { getStore } = await import("@netlify/blobs");
+  return getStore(blobStoreName);
+}
+
+function isLocalServerEntrypoint() {
+  const entrypoint = process.argv[1]?.replaceAll("\\", "/") ?? "";
+  return entrypoint.endsWith("/localServer.ts") || entrypoint.endsWith("/localServer.js");
 }
 
 function seedStore(): LocalStore {
