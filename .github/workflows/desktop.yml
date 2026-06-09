@@ -27,7 +27,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  VITE_API_URL: https://agentops.netlify.app/api
+  VITE_API_URL: https://agentops-ai.netlify.app/api
   APPLE_SIGNING_ENABLED: ${{ secrets.APPLE_CERTIFICATE != '' && secrets.APPLE_CERTIFICATE_PASSWORD != '' && secrets.APPLE_ID != '' && secrets.APPLE_PASSWORD != '' && secrets.APPLE_TEAM_ID != '' && secrets.KEYCHAIN_PASSWORD != '' }}
 
 jobs:

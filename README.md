@@ -4,8 +4,8 @@ AgentOps OS est une plateforme fullstack pour piloter des operations IA critique
 
 ## Liens publics
 
-- Web app: https://agentops.netlify.app
-- API: https://agentops.netlify.app/api
+- Web app: https://agentops-ai.netlify.app
+- API: https://agentops-ai.netlify.app/api
 - Desktop IDE: voir les releases GitHub pour macOS/Windows.
 
 ## Stack
@@ -74,7 +74,7 @@ Commandes production:
 npm run preflight:prod
 npm run prod:migrate -- --env deploy/production.env
 npm run prod:bootstrap -- --env deploy/production.env --api https://api.agentops.ai
-npm run prod:smoke -- --api https://agentops.netlify.app/api --web https://agentops.netlify.app
+npm run prod:smoke -- --api https://agentops-ai.netlify.app/api --web https://agentops-ai.netlify.app
 ```
 
 La release GitHub est preparee dans `.github/workflows/release.yml`. Elle verifie le projet, publie les images Docker sur GHCR, puis deploie Netlify si `NETLIFY_AUTH_TOKEN` et `NETLIFY_SITE_ID` sont disponibles. Les secrets attendus sont listes dans `docs/deployment/github-secrets.md`.

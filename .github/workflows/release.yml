@@ -17,9 +17,9 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: agentops-ai205/agentops
-  AGENTOPS_API_URL: https://agentops.netlify.app/api
-  AGENTOPS_WEB_URL: https://agentops.netlify.app
-  VITE_API_URL: https://agentops.netlify.app/api
+  AGENTOPS_API_URL: https://agentops-ai.netlify.app/api
+  AGENTOPS_WEB_URL: https://agentops-ai.netlify.app
+  VITE_API_URL: https://agentops-ai.netlify.app/api
 
 jobs:
   release:
@@ -113,7 +113,7 @@ jobs:
             echo "Skipping Netlify deploy because NETLIFY_AUTH_TOKEN or NETLIFY_SITE_ID is missing."
             exit 0
           fi
-          npx --yes netlify-cli deploy --prod --dir apps/web/dist --site "$NETLIFY_SITE_ID" --auth "$NETLIFY_AUTH_TOKEN"
+          npx --yes netlify-cli deploy --prod --dir apps/web/dist --functions netlify/functions --site "$NETLIFY_SITE_ID" --auth "$NETLIFY_AUTH_TOKEN"
 
       - name: Bootstrap production control plane
         env:

@@ -9,7 +9,7 @@ AgentOps Desktop is the native IDE surface for macOS and Windows. The web app re
 - Local runtime: guarded Tauri commands for project files, saves, allowlisted terminal runs and patch apply.
 - Local API: `@agentops/api` on `127.0.0.1:3000` for missions, evidence, audit, policy and cloud sync.
 - Cloud state: Supabase/PostgreSQL through the production API.
-- Web distribution: Netlify for `agentops.netlify.app`, then custom domain `app.agentops.ai`.
+- Web distribution: Netlify for `agentops-ai.netlify.app`, then custom domain `app.agentops.ai`.
 - Desktop distribution: CI release artifacts. macOS can ship as an unsigned early-access build with a terminal installer helper, then graduate to signed and notarized DMGs when Apple Developer secrets are configured.
 
 ## Build Targets

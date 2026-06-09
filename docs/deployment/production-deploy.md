@@ -8,8 +8,8 @@ Target accounts:
 
 Target public surface:
 
-- Web now: `https://agentops.netlify.app`
-- API now: `https://agentops.netlify.app/api`
+- Web now: `https://agentops-ai.netlify.app`
+- API now: `https://agentops-ai.netlify.app/api`
 - Future custom app domain: `https://app.agentops.ai`
 - Future API domain: `https://api.agentops.ai`
 
@@ -41,7 +41,7 @@ Production release workflow:
 - Applies Supabase migrations when `PRODUCTION_DATABASE_URL` exists.
 - Deploys the web app to Netlify when `NETLIFY_AUTH_TOKEN` and `NETLIFY_SITE_ID` exist.
 - Bootstraps the control plane when `AGENTOPS_OPERATOR_TOKEN` exists.
-- Runs smoke checks against `https://agentops.netlify.app` and `/api`.
+- Runs smoke checks against `https://agentops-ai.netlify.app` and `/api`.
 
 Continuous integration:
 
@@ -80,15 +80,15 @@ Use `netlify.toml`. Set:
 
 - Build command: from `netlify.toml`
 - Publish directory: `apps/web/dist`
-- `VITE_API_URL=https://agentops.netlify.app/api` until `api.agentops.ai` is live.
+- `VITE_API_URL=https://agentops-ai.netlify.app/api` until `api.agentops.ai` is live.
 
-`netlify.toml` already pins `VITE_API_URL=https://agentops.netlify.app/api` so a Netlify deploy cannot accidentally ship a frontend pointing at `127.0.0.1`.
+`netlify.toml` already pins `VITE_API_URL=https://agentops-ai.netlify.app/api` so a Netlify deploy cannot accidentally ship a frontend pointing at `127.0.0.1`.
 
 Custom domain:
 
 1. Add `app.agentops.ai` to the Netlify site.
 2. Point DNS for `app.agentops.ai` to Netlify as instructed by Netlify.
-3. Keep `agentops.netlify.app` as the temporary production URL until the custom domain is attached.
+3. Keep `agentops-ai.netlify.app` as the temporary production URL until the custom domain is attached.
 4. Do not present the Netlify preview URL as the product URL.
 
 ## API Container

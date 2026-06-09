@@ -6,8 +6,8 @@ Last verified: 2026-06-09
 
 - GitHub source of truth: `agentops-ai205/agentops`, default branch `codex/agentops-v3-production`.
 - Netlify site: `agentops`.
-- Web URL: `https://agentops.netlify.app`.
-- API URL: `https://agentops.netlify.app/api`.
+- Web URL: `https://agentops-ai.netlify.app`.
+- API URL: `https://agentops-ai.netlify.app/api`.
 - Supabase project ref: `elotpgbijlaqopcmdxac`.
 
 ## Required Green Checks
@@ -15,7 +15,7 @@ Last verified: 2026-06-09
 Run after every production deploy:
 
 ```bash
-npm run prod:smoke -- --api https://agentops.netlify.app/api --web https://agentops.netlify.app
+npm run prod:smoke -- --api https://agentops-ai.netlify.app/api --web https://agentops-ai.netlify.app
 ```
 
 Run after every container API deploy:
@@ -47,8 +47,8 @@ Netlify production deploys must use:
 - Publish directory: `apps/web/dist`.
 - `DATABASE_URL` as a secret value with `sslmode=require`.
 - `AGENTOPS_OPERATOR_TOKEN` as a secret value.
-- `AGENTOPS_ALLOWED_ORIGINS=https://agentops.netlify.app,https://app.agentops.ai`.
-- `VITE_API_URL=https://agentops.netlify.app/api`.
+- `AGENTOPS_ALLOWED_ORIGINS=https://agentops-ai.netlify.app,https://app.agentops.ai`.
+- `VITE_API_URL=https://agentops-ai.netlify.app/api`.
 
 If the custom domain is attached later, add the custom origin without removing the Netlify origin until smoke tests pass on the domain.
 
@@ -77,8 +77,8 @@ Backup posture:
 
 If the web UI loads but API fails:
 
-1. Check `https://agentops.netlify.app/api/live`.
-2. Check `https://agentops.netlify.app/api/health`.
+1. Check `https://agentops-ai.netlify.app/api/live`.
+2. Check `https://agentops-ai.netlify.app/api/health`.
 3. Inspect Netlify Function logs for missing env vars or database connection errors.
 4. Verify `DATABASE_URL` is still scoped to Functions and Production.
 

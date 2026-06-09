@@ -37,8 +37,8 @@ The API host must receive these runtime secrets directly in its dashboard:
 
 - `DATABASE_URL`: Supabase PostgreSQL connection string.
 - `AGENTOPS_OPERATOR_TOKEN`: long random operator token, at least 32 characters.
-- `AGENTOPS_ALLOWED_ORIGINS=https://agentops.netlify.app,https://app.agentops.ai,https://agentops.ai,https://www.agentops.ai`
-- `VITE_API_URL=https://agentops.netlify.app/api` now, then `https://app.agentops.ai/api` or `https://api.agentops.ai` after the custom domain is live.
+- `AGENTOPS_ALLOWED_ORIGINS=https://agentops-ai.netlify.app,https://app.agentops.ai,https://agentops.ai,https://www.agentops.ai`
+- `VITE_API_URL=https://agentops-ai.netlify.app/api` now, then `https://app.agentops.ai/api` or `https://api.agentops.ai` after the custom domain is live.
 
 ## Supabase
 
