@@ -10,7 +10,7 @@ AgentOps Desktop is the native IDE surface for macOS and Windows. The web app re
 - Local API: `@agentops/api` on `127.0.0.1:3000` for missions, evidence, audit, policy and cloud sync.
 - Cloud state: Supabase/PostgreSQL through the production API.
 - Web distribution: Netlify for `agentops.ai`.
-- Desktop distribution: signed macOS and Windows installers from CI release artifacts.
+- Desktop distribution: CI release artifacts. macOS can ship as an unsigned early-access build with a terminal installer helper, then graduate to signed and notarized DMGs when Apple Developer secrets are configured.
 
 ## Build Targets
 
@@ -19,7 +19,7 @@ AgentOps Desktop is the native IDE surface for macOS and Windows. The web app re
 
 ## GitHub Workflow
 
-`.github/workflows/desktop.yml` builds macOS and Windows bundles on production branch changes, pull requests, manual dispatch and `v*` tags. Tag builds attach bundles to a draft GitHub Release so signing and notarization can be verified before public publication.
+`.github/workflows/desktop.yml` builds macOS and Windows bundles on production branch changes, pull requests, manual dispatch and `v*` tags. Tag builds attach bundles to a draft GitHub Release. If Apple signing secrets are missing, the macOS artifact is treated as unsigned early access and includes `install-agentops-ide-macos.sh` so users can install from Terminal.
 
 ## Required Release Gates
 
@@ -39,7 +39,8 @@ npm run desktop:build
 
 ## Signing And Updates
 
-- macOS requires Apple Developer ID signing and notarization before public distribution.
+- macOS requires Apple Developer ID signing and notarization for normal double-click public distribution.
+- Before Apple signing is available, publish the unsigned macOS artifact only with the terminal installer helper and label it as early access.
 - Windows requires Authenticode signing before broad release.
 - Auto-update should be served from signed GitHub Releases or a controlled release endpoint.
 - Desktop update metadata must be generated only after all web/API tests and desktop builds pass.

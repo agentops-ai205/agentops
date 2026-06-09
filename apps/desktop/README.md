@@ -15,7 +15,13 @@ GitHub Actions signs and notarizes macOS release builds when these repository se
 - `APPLE_TEAM_ID`: Apple Developer Team ID.
 - `KEYCHAIN_PASSWORD`: temporary CI keychain password.
 
-Tagged releases fail on macOS when these secrets are missing, so an unsigned public DMG is not attached by accident.
+When these secrets are missing, tagged releases publish an explicit unsigned macOS build and an installer helper named `install-agentops-ide-macos.sh`. The helper downloads the DMG from GitHub Releases, installs the app into `~/Applications`, removes the local browser quarantine marker and opens the IDE:
+
+```bash
+curl -fsSL https://github.com/agentops-ai205/agentops/releases/latest/download/install-agentops-ide-macos.sh | zsh
+```
+
+This is a bridge for early distribution. A fully public macOS release should still use Apple signing and notarization.
 
 The desktop app reuses the same product surface and adds a guarded native runtime:
 
