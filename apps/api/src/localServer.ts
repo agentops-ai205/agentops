@@ -906,7 +906,7 @@ async function ensureStore() {
 async function loadStore(): Promise<LocalStore> {
   if (useBlobStore()) {
     const blob = await agentopsBlobStore();
-    const store = await blob.get(blobStoreKey, { consistency: "strong", type: "json" });
+    const store = await blob.get(blobStoreKey, { type: "json" });
     return store ? normalizeStore(store as LocalStore) : seedStore();
   }
 
@@ -934,6 +934,11 @@ function useBlobStore() {
 
 async function agentopsBlobStore() {
   const { getStore } = await import("@netlify/blobs");
+  const siteID = process.env.AGENTOPS_NETLIFY_SITE_ID ?? process.env.NETLIFY_SITE_ID;
+  const token = process.env.AGENTOPS_BLOBS_TOKEN ?? process.env.NETLIFY_AUTH_TOKEN;
+  if (siteID && token) {
+    return getStore({ name: blobStoreName, siteID, token });
+  }
   return getStore(blobStoreName);
 }
 
