@@ -17,10 +17,10 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently -n api,web -c cyan,green \"npm run dev:api\" \"npm run dev:web\"",
+    "dev": "node scripts/dev.mjs dev",
     "dev:api": "npm --workspace @agentops/shared run build && npm --workspace @agentops/api run dev",
     "dev:api:local": "npm --workspace @agentops/shared run build && npm --workspace @agentops/api run dev:local",
-    "dev:local": "concurrently -n api-local,web -c cyan,green \"npm run dev:api:local\" \"npm run dev:web\"",
+    "dev:local": "node scripts/dev.mjs local",
     "dev:web": "npm --workspace @agentops/shared run build && npm --workspace @agentops/web run dev -- --host 127.0.0.1",
     "desktop:dev": "npm --workspace @agentops/desktop run dev",
     "desktop:build": "npm --workspace @agentops/desktop run build",
@@ -37,9 +37,7 @@
     "prod:bootstrap": "node scripts/production-bootstrap.mjs",
     "prod:smoke": "node scripts/production-smoke.mjs"
   },
-  "devDependencies": {
-    "concurrently": "^9.1.2"
-  },
+  "devDependencies": {},
   "engines": {
     "node": ">=20.11.0",
     "npm": ">=10.0.0"
