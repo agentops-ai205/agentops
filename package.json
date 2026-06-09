@@ -1,7 +1,7 @@
 {
   "name": "agentops-os",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.5",
   "description": "AgentOps OS - gouvernance, orchestration, audit et evaluation pour agents de codage sous supervision humaine.",
   "homepage": "https://agentops.ai",
   "repository": {

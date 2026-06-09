@@ -1,6 +1,6 @@
 [package]
 name = "agentops-desktop"
-version = "1.0.0"
+version = "1.0.5"
 description = "AgentOps IDE desktop shell for macOS and Windows."
 authors = ["AgentOps"]
 license = "Proprietary"
