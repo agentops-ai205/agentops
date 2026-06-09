@@ -125,7 +125,7 @@ cp deploy/production.env.example deploy/production.env
 npm run prod:migrate -- --env deploy/production.env
 docker compose -f deploy/docker-compose.production.yml up -d --build api
 npm run prod:bootstrap -- --env deploy/production.env --api https://api.agentops.ai
-npm run prod:smoke -- --api https://api.agentops.ai --web https://agentops.ai
+npm run prod:smoke -- --api https://api.agentops.ai --web https://agentops.ai --require-rust-core
 ```
 
 To run the web container outside Netlify as a fallback:

@@ -18,11 +18,18 @@ Run after every production deploy:
 npm run prod:smoke -- --api https://capable-cat-f6133c.netlify.app/api --web https://capable-cat-f6133c.netlify.app
 ```
 
+Run after every container API deploy:
+
+```bash
+npm run prod:smoke -- --api https://api.agentops.ai --web https://agentops.ai --require-rust-core
+```
+
 Manual API checks:
 
 - `GET /api/live` must return `ok: true`.
 - `GET /api/health` must return `ok: true` and `checks.database: true`.
 - `checks.policy_engine` and `checks.sandbox_engine` are expected to be `typescript` on Netlify Functions until the containerized Rust worker path is live.
+- On the API container, `checks.rust_core` must be `true` and readiness must fail if `rust_core_strict` is configured without the Rust binary.
 
 Manual UI checks:
 

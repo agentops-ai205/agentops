@@ -53,6 +53,7 @@ import { builtInProviders } from "./services/modelProviders.js";
 import { toolDescriptors } from "./services/toolRegistry.js";
 import { writeAuditEvent } from "./services/audit.js";
 import { findRustCoreBinary } from "./services/rustCore.js";
+import { isRustCoreRequired } from "./services/readiness.js";
 
 export async function buildApp() {
 const app = Fastify({ logger: true, bodyLimit: config.httpBodyLimitBytes });
@@ -665,9 +666,11 @@ export async function bootstrapApplication(options: BootstrapOptions = {}) {
 }
 
 export async function getReadiness() {
+  const rustCoreRequired = isRustCoreRequired(config.policyEngine, config.sandboxEngine);
   const checks = {
     database: false,
     rust_core: Boolean(findRustCoreBinary()),
+    rust_core_required: rustCoreRequired,
     default_organization: Boolean(config.defaultOrganizationId),
     policy_engine: config.policyEngine,
     sandbox_engine: config.sandboxEngine
@@ -681,7 +684,7 @@ export async function getReadiness() {
   }
 
   return {
-    ok: checks.database && checks.default_organization,
+    ok: checks.database && checks.default_organization && (!rustCoreRequired || checks.rust_core),
     service: "agentops-api",
     environment: config.appEnv,
     database: "postgresql",
