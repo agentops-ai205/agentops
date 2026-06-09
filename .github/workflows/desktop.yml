@@ -27,7 +27,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  VITE_API_URL: https://capable-cat-f6133c.netlify.app/api
+  VITE_API_URL: https://agentic-unicorn-os.netlify.app/api
 
 jobs:
   build-desktop:

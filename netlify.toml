@@ -5,7 +5,7 @@
 [build.environment]
   NODE_VERSION = "22"
   NPM_VERSION = "10"
-  VITE_API_URL = "https://capable-cat-f6133c.netlify.app/api"
+  VITE_API_URL = "https://agentic-unicorn-os.netlify.app/api"
 
 [functions]
   directory = "netlify/functions"
@@ -26,7 +26,7 @@
   for = "/*"
   [headers.values]
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
-    Content-Security-Policy = "default-src 'self'; connect-src 'self' https://capable-cat-f6133c.netlify.app; img-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+    Content-Security-Policy = "default-src 'self'; connect-src 'self' https://agentic-unicorn-os.netlify.app; img-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
     X-Content-Type-Options = "nosniff"
     X-Frame-Options = "DENY"
     Referrer-Policy = "no-referrer"

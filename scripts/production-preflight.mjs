@@ -15,12 +15,12 @@ for (let index = 2; index < process.argv.length; index += 1) {
 const envPath = path.resolve(args.get("--env") || "deploy/production.env");
 const allowPlaceholders = Boolean(args.get("--allow-placeholders"));
 const acceptedWebOrigins = [
-  "https://capable-cat-f6133c.netlify.app",
+  "https://agentic-unicorn-os.netlify.app",
   "https://agentops.ai",
   "https://www.agentops.ai"
 ];
 const acceptedApiUrls = [
-  "https://capable-cat-f6133c.netlify.app/api",
+  "https://agentic-unicorn-os.netlify.app/api",
   "https://api.agentops.ai"
 ];
 const root = process.cwd();
