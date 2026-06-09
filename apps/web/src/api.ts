@@ -1,4 +1,11 @@
-const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:3000";
+function defaultApiUrl() {
+  if (typeof window !== "undefined" && /^https?:$/.test(window.location.protocol)) {
+    return `${window.location.origin}/api`;
+  }
+  return "http://127.0.0.1:3000";
+}
+
+const API_URL = (import.meta.env.VITE_API_URL || defaultApiUrl()).replace(/\/$/, "");
 const SESSION_TOKEN_KEY = "agentops.sessionToken";
 
 export class ApiClientError extends Error {
