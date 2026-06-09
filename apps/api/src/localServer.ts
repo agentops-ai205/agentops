@@ -77,7 +77,7 @@ const localPatchApplySchema = z.object({
 
 const app = Fastify({ logger: true, bodyLimit: config.httpBodyLimitBytes });
 
-await app.register(cors, {
+app.register(cors, {
   credentials: false,
   origin: true
 });
@@ -885,8 +885,10 @@ export async function prepareLocalApp() {
 }
 
 if (isLocalServerEntrypoint()) {
-  await prepareLocalApp();
-  await app.listen({ host: config.host, port: config.port });
+  startLocalServer().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
 }
 
 async function mutate(mutator: (store: LocalStore) => void | Promise<void>) {
@@ -938,6 +940,11 @@ async function agentopsBlobStore() {
 function isLocalServerEntrypoint() {
   const entrypoint = process.argv[1]?.replaceAll("\\", "/") ?? "";
   return entrypoint.endsWith("/localServer.ts") || entrypoint.endsWith("/localServer.js");
+}
+
+async function startLocalServer() {
+  await prepareLocalApp();
+  await app.listen({ host: config.host, port: config.port });
 }
 
 function seedStore(): LocalStore {
