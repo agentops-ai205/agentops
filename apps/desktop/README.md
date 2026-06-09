@@ -2,6 +2,21 @@
 
 AgentOps Desktop packages the existing React cockpit as a native macOS and Windows IDE through Tauri.
 
+## macOS release signing
+
+Public macOS `.dmg` releases must be signed with a Developer ID Application certificate and notarized by Apple. Otherwise Gatekeeper can report that `AgentOps IDE` is damaged after the browser downloads the image.
+
+GitHub Actions signs and notarizes macOS release builds when these repository secrets are present:
+
+- `APPLE_CERTIFICATE`: base64 encoded `.p12` Developer ID Application certificate.
+- `APPLE_CERTIFICATE_PASSWORD`: password used when exporting the `.p12`.
+- `APPLE_ID`: Apple ID email used for notarization.
+- `APPLE_PASSWORD`: app-specific password for that Apple ID.
+- `APPLE_TEAM_ID`: Apple Developer Team ID.
+- `KEYCHAIN_PASSWORD`: temporary CI keychain password.
+
+Tagged releases fail on macOS when these secrets are missing, so an unsigned public DMG is not attached by accident.
+
 The desktop app reuses the same product surface and adds a guarded native runtime:
 
 - React remains the shared product surface.

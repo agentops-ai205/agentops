@@ -28,6 +28,7 @@ concurrency:
 
 env:
   VITE_API_URL: https://agentic-unicorn-os.netlify.app/api
+  APPLE_SIGNING_ENABLED: ${{ secrets.APPLE_CERTIFICATE != '' && secrets.APPLE_CERTIFICATE_PASSWORD != '' && secrets.APPLE_ID != '' && secrets.APPLE_PASSWORD != '' && secrets.APPLE_TEAM_ID != '' && secrets.KEYCHAIN_PASSWORD != '' }}
 
 jobs:
   build-desktop:
@@ -71,6 +72,41 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Require Apple signing for tagged macOS releases
+        if: runner.os == 'macOS' && startsWith(github.ref, 'refs/tags/v') && env.APPLE_SIGNING_ENABLED != 'true'
+        run: |
+          echo "Tagged macOS releases require Apple signing and notarization secrets."
+          echo "Add APPLE_CERTIFICATE, APPLE_CERTIFICATE_PASSWORD, APPLE_ID, APPLE_PASSWORD, APPLE_TEAM_ID and KEYCHAIN_PASSWORD."
+          exit 1
+
+      - name: Import Apple Developer ID certificate
+        if: runner.os == 'macOS' && env.APPLE_SIGNING_ENABLED == 'true'
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          CERTIFICATE_PATH="$RUNNER_TEMP/apple_developer_id.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/agentops-signing.keychain-db"
+
+          echo "$APPLE_CERTIFICATE" | base64 --decode > "$CERTIFICATE_PATH"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERTIFICATE_PATH" -P "$APPLE_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+
+          CERT_ID="$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | awk -F'"' '/Developer ID Application/ {print $2; exit}')"
+          if [ -z "$CERT_ID" ]; then
+            echo "No Developer ID Application identity found in imported certificate."
+            security find-identity -v -p codesigning "$KEYCHAIN_PATH"
+            exit 1
+          fi
+
+          echo "APPLE_SIGNING_IDENTITY=$CERT_ID" >> "$GITHUB_ENV"
+          echo "Imported Apple Developer ID certificate."
+
       - name: Build shared web surface
         run: npm --workspace @agentops/shared run build && npm --workspace @agentops/web run build
 
@@ -79,6 +115,13 @@ jobs:
 
       - name: Build desktop app
         shell: bash
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ env.APPLE_SIGNING_IDENTITY }}
         run: |
           for attempt in 1 2; do
             rm -rf apps/desktop/src-tauri/target/release/bundle desktop-artifacts

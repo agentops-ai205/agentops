@@ -39,6 +39,11 @@
     ],
     "category": "DeveloperTool",
     "shortDescription": "Governed AI coding IDE",
-    "longDescription": "AgentOps IDE combines missions, local files, terminal execution, patch review, evidence and human approvals for governed agentic development."
+    "longDescription": "AgentOps IDE combines missions, local files, terminal execution, patch review, evidence and human approvals for governed agentic development.",
+    "macOS": {
+      "hardenedRuntime": true,
+      "minimumSystemVersion": "11.0",
+      "entitlements": "entitlements.plist"
+    }
   }
 }
