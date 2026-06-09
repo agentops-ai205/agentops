@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.8",
   "description": "AgentOps OS - gouvernance, orchestration, audit et evaluation pour agents de codage sous supervision humaine.",
-  "homepage": "https://agentops.ai",
+  "homepage": "https://agentops.netlify.app",
   "repository": {
     "type": "git",
     "url": "https://github.com/agentops-ai205/agentops.git"

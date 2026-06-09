@@ -8,9 +8,9 @@ Target accounts:
 
 Target public surface:
 
-- Web now: `https://capable-cat-f6133c.netlify.app`
-- API now: `https://capable-cat-f6133c.netlify.app/api`
-- Future custom domain: `https://agentops.ai`
+- Web now: `https://agentops.netlify.app`
+- API now: `https://agentops.netlify.app/api`
+- Future custom app domain: `https://app.agentops.ai`
 - Future API domain: `https://api.agentops.ai`
 
 ## Build Gates
@@ -41,7 +41,7 @@ Production release workflow:
 - Applies Supabase migrations when `PRODUCTION_DATABASE_URL` exists.
 - Deploys the web app to Netlify when `NETLIFY_AUTH_TOKEN` and `NETLIFY_SITE_ID` exist.
 - Bootstraps the control plane when `AGENTOPS_OPERATOR_TOKEN` exists.
-- Runs smoke checks against `https://capable-cat-f6133c.netlify.app` and `/api`.
+- Runs smoke checks against `https://agentops.netlify.app` and `/api`.
 
 Continuous integration:
 
@@ -80,15 +80,15 @@ Use `netlify.toml`. Set:
 
 - Build command: from `netlify.toml`
 - Publish directory: `apps/web/dist`
-- `VITE_API_URL=https://capable-cat-f6133c.netlify.app/api` until `api.agentops.ai` is live.
+- `VITE_API_URL=https://agentops.netlify.app/api` until `api.agentops.ai` is live.
 
-`netlify.toml` already pins `VITE_API_URL=https://capable-cat-f6133c.netlify.app/api` so a Netlify deploy cannot accidentally ship a frontend pointing at `127.0.0.1`.
+`netlify.toml` already pins `VITE_API_URL=https://agentops.netlify.app/api` so a Netlify deploy cannot accidentally ship a frontend pointing at `127.0.0.1`.
 
 Custom domain:
 
-1. Add `agentops.ai` and `www.agentops.ai` to the Netlify site.
-2. Point DNS for `agentops.ai` to Netlify as instructed by Netlify.
-3. Keep `capable-cat-f6133c.netlify.app` as the temporary production URL until the custom domain is attached.
+1. Add `app.agentops.ai` to the Netlify site.
+2. Point DNS for `app.agentops.ai` to Netlify as instructed by Netlify.
+3. Keep `agentops.netlify.app` as the temporary production URL until the custom domain is attached.
 4. Do not present the Netlify preview URL as the product URL.
 
 ## API Container
@@ -115,7 +115,7 @@ To validate only the committed template:
 npm run preflight:prod -- --env deploy/production.env.example --allow-placeholders
 ```
 
-DNS for the API should map `api.agentops.ai` to the chosen API host. After the API domain is live, set Netlify `VITE_API_URL=https://api.agentops.ai` and rebuild the web app.
+DNS for the API should map either `app.agentops.ai/api` through Netlify Functions or `api.agentops.ai` to the chosen API host. After the API domain is live, set Netlify `VITE_API_URL=https://app.agentops.ai/api` or `https://api.agentops.ai` and rebuild the web app.
 
 For a generic Docker host:
 
@@ -125,7 +125,7 @@ cp deploy/production.env.example deploy/production.env
 npm run prod:migrate -- --env deploy/production.env
 docker compose -f deploy/docker-compose.production.yml up -d --build api
 npm run prod:bootstrap -- --env deploy/production.env --api https://api.agentops.ai
-npm run prod:smoke -- --api https://api.agentops.ai --web https://agentops.ai --require-rust-core
+npm run prod:smoke -- --api https://api.agentops.ai --web https://app.agentops.ai --require-rust-core
 ```
 
 To run the web container outside Netlify as a fallback:

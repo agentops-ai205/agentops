@@ -17,9 +17,9 @@ concurrency:
 env:
   REGISTRY: ghcr.io
   IMAGE_PREFIX: agentops-ai205/agentops
-  AGENTOPS_API_URL: https://agentic-unicorn-os.netlify.app/api
-  AGENTOPS_WEB_URL: https://agentic-unicorn-os.netlify.app
-  VITE_API_URL: https://agentic-unicorn-os.netlify.app/api
+  AGENTOPS_API_URL: https://agentops.netlify.app/api
+  AGENTOPS_WEB_URL: https://agentops.netlify.app
+  VITE_API_URL: https://agentops.netlify.app/api
 
 jobs:
   release:

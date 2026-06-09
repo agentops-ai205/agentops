@@ -2,10 +2,10 @@ import { argValue } from "./env-utils.mjs";
 
 const args = process.argv.slice(2);
 const apiUrl = stripTrailingSlash(
-  argValue(args, "--api", process.env.AGENTOPS_API_URL || "https://agentic-unicorn-os.netlify.app/api")
+  argValue(args, "--api", process.env.AGENTOPS_API_URL || "https://agentops.netlify.app/api")
 );
 const webUrl = stripTrailingSlash(
-  argValue(args, "--web", process.env.AGENTOPS_WEB_URL || "https://agentic-unicorn-os.netlify.app")
+  argValue(args, "--web", process.env.AGENTOPS_WEB_URL || "https://agentops.netlify.app")
 );
 const operatorToken = process.env.AGENTOPS_OPERATOR_TOKEN;
 const requireRustCore = args.includes("--require-rust-core") || process.env.AGENTOPS_REQUIRE_RUST_CORE === "true";

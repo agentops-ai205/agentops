@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
-      VITE_API_URL: https://agentic-unicorn-os.netlify.app/api
+      VITE_API_URL: https://agentops.netlify.app/api
     steps:
       - name: Checkout
         uses: actions/checkout@v4

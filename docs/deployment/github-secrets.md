@@ -5,7 +5,7 @@ Set these values in the `agentops-ai205/agentops` GitHub repository before runni
 ## GitHub Actions
 
 - `NETLIFY_AUTH_TOKEN`: Netlify personal access token used only for web deploy.
-- `NETLIFY_SITE_ID`: Netlify site id for `capable-cat-f6133c`.
+- `NETLIFY_SITE_ID`: Netlify site id for `agentops`.
 - `PRODUCTION_DATABASE_URL`: Supabase PostgreSQL connection string for release-time migrations.
 - `AGENTOPS_OPERATOR_TOKEN`: same operator token configured in Netlify/API runtime; used for release bootstrap and authenticated smoke checks.
 
@@ -37,8 +37,8 @@ The API host must receive these runtime secrets directly in its dashboard:
 
 - `DATABASE_URL`: Supabase PostgreSQL connection string.
 - `AGENTOPS_OPERATOR_TOKEN`: long random operator token, at least 32 characters.
-- `AGENTOPS_ALLOWED_ORIGINS=https://capable-cat-f6133c.netlify.app,https://agentops.ai,https://www.agentops.ai`
-- `VITE_API_URL=https://capable-cat-f6133c.netlify.app/api` now, then `https://api.agentops.ai` after the API domain is live.
+- `AGENTOPS_ALLOWED_ORIGINS=https://agentops.netlify.app,https://app.agentops.ai,https://agentops.ai,https://www.agentops.ai`
+- `VITE_API_URL=https://agentops.netlify.app/api` now, then `https://app.agentops.ai/api` or `https://api.agentops.ai` after the custom domain is live.
 
 ## Supabase
 
