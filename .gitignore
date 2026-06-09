@@ -9,7 +9,7 @@ packages/*/dist/
 .agentops/audit/action-log.jsonl
 .agentops/cargo/
 .agentops/local-run.log
-.agentops/local-store.json
+.agentops/local-store*.json
 .agentops/sandboxes/
 npm-debug.log*
 dist/

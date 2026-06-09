@@ -109,7 +109,7 @@ app.get("/live", async () => ({
   environment: "local_file"
 }));
 
-app.get("/ready", async () => ({
+const localReadiness = {
   ok: true,
   service: "agentops-local-api",
   environment: "local_file",
@@ -123,13 +123,11 @@ app.get("/ready", async () => ({
     policy_engine: "deterministic",
     sandbox_engine: "simulated_local"
   }
-}));
+};
 
-app.get("/health", async () => ({
-  ok: true,
-  service: "agentops-local-api",
-  environment: "local_file"
-}));
+app.get("/ready", async () => localReadiness);
+
+app.get("/health", async () => localReadiness);
 
 app.post("/v1/auth/signup", async (request, reply) => {
   const body = signupSchema.parse(request.body);

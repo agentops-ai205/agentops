@@ -33,7 +33,11 @@ export function buildConfig(env: NodeJS.ProcessEnv): AgentOpsConfig {
 
   const resolved: AgentOpsConfig = {
     appEnv: env.NODE_ENV ?? "development",
-    databaseUrl: env.DATABASE_URL ?? "postgres://agentops:agentops@127.0.0.1:5432/agentops",
+    databaseUrl:
+      env.DATABASE_URL ??
+      env.NETLIFY_DATABASE_URL ??
+      env.NETLIFY_DATABASE_URL_UNPOOLED ??
+      "postgres://agentops:agentops@127.0.0.1:5432/agentops",
     host: env.API_HOST ?? "127.0.0.1",
     port: numberFromEnv(env.API_PORT, 3000, "API_PORT"),
     httpBodyLimitBytes: numberFromEnv(
