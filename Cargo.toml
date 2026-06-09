@@ -5,4 +5,4 @@ resolver = "2"
 [workspace.package]
 edition = "2021"
 license = "Proprietary"
-version = "1.0.7"
+version = "1.0.8"

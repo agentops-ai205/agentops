@@ -51,7 +51,7 @@ export async function handler(event: NetlifyEvent) {
 async function ensureBootstrapped() {
   if (!bootstrapPromise) {
     bootstrapPromise = bootstrapApplication({
-      runMigrations: process.env.AGENTOPS_AUTO_MIGRATE === "true",
+      runMigrations: process.env.AGENTOPS_AUTO_MIGRATE !== "false",
       initializeKernelFiles: false,
       seed: process.env.AGENTOPS_AUTO_SEED !== "false"
     });
@@ -61,7 +61,7 @@ async function ensureBootstrapped() {
 }
 
 function shouldBootstrap(path: string) {
-  return !["/live", "/ready", "/health"].includes(path);
+  return path !== "/live";
 }
 
 function normalizePath(path: string) {

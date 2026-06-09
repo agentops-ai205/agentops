@@ -814,6 +814,7 @@ export async function getReadiness() {
   const rustCoreRequired = isRustCoreRequired(config.policyEngine, config.sandboxEngine);
   const checks = {
     database: false,
+    auth_schema: false,
     rust_core: Boolean(findRustCoreBinary()),
     rust_core_required: rustCoreRequired,
     default_organization: Boolean(config.defaultOrganizationId),
@@ -824,12 +825,20 @@ export async function getReadiness() {
   try {
     await sql`select 1`;
     checks.database = true;
+    const [authSchema] = await sql<{ ready: boolean }[]>`
+      select (
+        to_regclass('public.user_accounts') is not null
+        and to_regclass('public.user_sessions') is not null
+      ) as ready
+    `;
+    checks.auth_schema = Boolean(authSchema?.ready);
   } catch {
     checks.database = false;
+    checks.auth_schema = false;
   }
 
   return {
-    ok: checks.database && checks.default_organization && (!rustCoreRequired || checks.rust_core),
+    ok: checks.database && checks.auth_schema && checks.default_organization && (!rustCoreRequired || checks.rust_core),
     service: "agentops-api",
     environment: config.appEnv,
     database: "postgresql",

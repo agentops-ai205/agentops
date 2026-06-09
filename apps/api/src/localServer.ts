@@ -117,6 +117,7 @@ app.get("/ready", async () => ({
   store_path: storePath,
   checks: {
     database: true,
+    auth_schema: true,
     rust_core: true,
     default_organization: true,
     policy_engine: "deterministic",

@@ -26,6 +26,7 @@ await check("api:overview", `${apiUrl}/v1/overview`, {
   headers: operatorToken ? { authorization: `Bearer ${operatorToken}` } : {},
   expected: operatorToken ? [200] : [200, 401]
 });
+await authSmoke();
 
 if (requireRustCore) {
   const rustCoreReady = health.json?.checks?.rust_core === true || ready.json?.checks?.rust_core === true;
@@ -68,8 +69,11 @@ async function check(name, url, options = {}) {
 
 async function attemptCheck(name, url, expected, options = {}) {
   try {
+    const headers = options.headers ?? {};
     const response = await fetch(url, {
-      headers: options.headers ?? {}
+      method: options.method ?? "GET",
+      headers: options.body === undefined ? headers : { "content-type": "application/json", ...headers },
+      body: options.body === undefined ? undefined : JSON.stringify(options.body)
     });
     const body = await response.text();
     return {
@@ -89,6 +93,51 @@ async function attemptCheck(name, url, expected, options = {}) {
       required: options.required
     };
   }
+}
+
+async function authSmoke() {
+  const email = `release-smoke-${Date.now().toString(36)}@agentops.ai`;
+  const password = `ReleaseSmoke-${Math.random().toString(36).slice(2, 10)}!`;
+  const signup = await check("api:auth_signup", `${apiUrl}/v1/auth/signup`, {
+    method: "POST",
+    expected: [201],
+    body: {
+      name: "Release Smoke",
+      email,
+      password,
+      organization_name: "AgentOps Release Smoke",
+      language: "en"
+    }
+  });
+  const token = signup.json?.token;
+  checks.push({
+    ok: typeof token === "string" && token.startsWith("aos_"),
+    name: "api:auth_token",
+    status: token ? "present" : "missing",
+    url: `${apiUrl}/v1/auth/signup`
+  });
+
+  if (!token) return;
+
+  await check("api:auth_me", `${apiUrl}/v1/auth/me`, {
+    expected: [200],
+    headers: { authorization: `Bearer ${token}` }
+  });
+  await check("api:auth_overview", `${apiUrl}/v1/overview`, {
+    expected: [200],
+    headers: { authorization: `Bearer ${token}` }
+  });
+  await check("api:auth_login", `${apiUrl}/v1/auth/login`, {
+    method: "POST",
+    expected: [200],
+    body: { email, password }
+  });
+  await check("api:auth_logout", `${apiUrl}/v1/auth/logout`, {
+    method: "POST",
+    expected: [200],
+    headers: { authorization: `Bearer ${token}` },
+    body: {}
+  });
 }
 
 function delay(ms) {

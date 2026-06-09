@@ -37,7 +37,8 @@ const requiredFiles = [
   "scripts/production-smoke.mjs",
   "apps/api/migrations/0001_agentops.sql",
   "apps/api/migrations/0002_supabase_ready_tenancy.sql",
-  "apps/api/migrations/0003_supabase_rls.sql"
+  "apps/api/migrations/0003_supabase_rls.sql",
+  "apps/api/migrations/0004_user_auth.sql"
 ];
 
 const checks = [];
