@@ -1,3 +1,5 @@
+import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } from "node:crypto";
+import { promisify } from "node:util";
 import cors from "@fastify/cors";
 import {
   approvalSchema,
@@ -8,8 +10,10 @@ import {
   evidenceSchema,
   enqueueJobSchema,
   improvementProposalSchema,
+  loginSchema,
   policyActionSchema,
-  proposePatchSchema
+  proposePatchSchema,
+  signupSchema
 } from "@agentops/shared";
 import { and, desc, eq } from "drizzle-orm";
 import Fastify from "fastify";
@@ -32,7 +36,9 @@ import {
   organizations,
   patchProposals,
   policies,
-  projects
+  projects,
+  userAccounts,
+  userSessions
 } from "./db/schema.js";
 import { createEvidenceRecord } from "./services/evidenceService.js";
 import { id, improvementId, missionId } from "./services/ids.js";
@@ -55,6 +61,9 @@ import { writeAuditEvent } from "./services/audit.js";
 import { findRustCoreBinary } from "./services/rustCore.js";
 import { isRustCoreRequired } from "./services/readiness.js";
 
+const scrypt = promisify(scryptCallback);
+const sessionTtlMs = 1000 * 60 * 60 * 24 * 30;
+
 export async function buildApp() {
 const app = Fastify({ logger: true, bodyLimit: config.httpBodyLimitBytes });
 
@@ -70,7 +79,8 @@ configureHttpSecurity(app, {
   allowedOrigins: config.httpAllowedOrigins,
   operatorToken: config.operatorToken,
   rateLimitWindowMs: config.rateLimitWindowMs,
-  rateLimitMax: config.rateLimitMax
+  rateLimitMax: config.rateLimitMax,
+  userTokenVerifier: async (token) => verifySessionToken(token)
 });
 
 app.setErrorHandler((error, request, reply) => {
@@ -134,6 +144,100 @@ app.get("/health", async (_request, reply) => {
   return reply.code(readiness.ok ? 200 : 503).send(readiness);
 });
 
+app.post("/v1/auth/signup", async (request, reply) => {
+  const body = signupSchema.parse(request.body);
+  const email = normalizeEmail(body.email);
+  const existing = await db.select({ id: userAccounts.id }).from(userAccounts).where(eq(userAccounts.email, email));
+  if (existing.length > 0) {
+    throw new ApiError(409, "EMAIL_ALREADY_REGISTERED", "This email is already registered.");
+  }
+
+  const now = new Date();
+  const organizationId = id("org");
+  const projectId = `com.agentops.${slug(body.organization_name)}.${randomBytes(3).toString("hex")}`;
+
+  await db.insert(organizations).values({
+    id: organizationId,
+    name: body.organization_name,
+    plan: "team",
+    createdAt: now,
+    updatedAt: now
+  });
+
+  await db.insert(projects).values({
+    id: projectId,
+    organizationId,
+    name: `${body.organization_name} workspace`,
+    type: "agentic_operations",
+    criticality: "medium",
+    owners: { product: email, technical: email },
+    repos: [],
+    createdAt: now,
+    updatedAt: now
+  });
+
+  const user = {
+    id: id("usr"),
+    organizationId,
+    email,
+    name: body.name,
+    passwordHash: await hashPassword(body.password),
+    role: "owner",
+    language: body.language,
+    status: "active",
+    createdAt: now,
+    updatedAt: now
+  };
+
+  await db.insert(userAccounts).values(user);
+  await writeAuditEvent({
+    projectId,
+    actorId: user.id,
+    eventType: "user_signup",
+    reason: `Workspace created for ${body.organization_name}`,
+    metadata: { user_id: user.id, organization_id: organizationId }
+  });
+
+  const token = await createSession(user.id, organizationId);
+  return reply.code(201).send({
+    token,
+    user: publicUser(user),
+    organization: { id: organizationId, name: body.organization_name },
+    project: { id: projectId, name: `${body.organization_name} workspace` }
+  });
+});
+
+app.post("/v1/auth/login", async (request) => {
+  const body = loginSchema.parse(request.body);
+  const [user] = await db.select().from(userAccounts).where(eq(userAccounts.email, normalizeEmail(body.email)));
+  if (!user || !(await verifyPassword(body.password, user.passwordHash))) {
+    throw new ApiError(401, "INVALID_CREDENTIALS", "Email or password is incorrect.");
+  }
+  if (user.status !== "active") {
+    throw new ApiError(403, "USER_DISABLED", "This account is not active.");
+  }
+  const token = await createSession(user.id, user.organizationId);
+  const [organization] = await db.select().from(organizations).where(eq(organizations.id, user.organizationId));
+  return { token, user: publicUser(user), organization };
+});
+
+app.get("/v1/auth/me", async (request) => {
+  const { user } = await requireUserSession(request.headers.authorization);
+  const [organization] = await db.select().from(organizations).where(eq(organizations.id, user.organizationId));
+  return { user: publicUser(user), organization };
+});
+
+app.post("/v1/auth/logout", async (request) => {
+  const token = extractBearerToken(request.headers.authorization);
+  if (token) {
+    await db
+      .update(userSessions)
+      .set({ revokedAt: new Date(), lastSeenAt: new Date() })
+      .where(eq(userSessions.tokenHash, hashToken(token)));
+  }
+  return { ok: true };
+});
+
 app.post("/v1/bootstrap", async () => {
   const kernelFilesInitialized = shouldInitializeKernelFiles();
   if (kernelFilesInitialized) {
@@ -149,22 +253,59 @@ app.post("/v1/bootstrap", async () => {
   return { project_id: projectId };
 });
 
-app.get("/v1/overview", async () => {
-  const [organization] = await db.select().from(organizations).limit(1);
-  const [project] = await db.select().from(projects).limit(1);
-  const allMissions = await db.select().from(missions).orderBy(desc(missions.createdAt));
-  const allAgents = await db.select().from(agents);
-  const allPolicies = await db.select().from(policies);
-  const allApprovals = await db.select().from(approvals).orderBy(desc(approvals.createdAt));
-  const allEvidence = await db.select().from(evidence).orderBy(desc(evidence.createdAt));
-  const allAudit = await db.select().from(auditEvents).orderBy(desc(auditEvents.createdAt)).limit(30);
-  const allMemory = await db.select().from(memoryItems).orderBy(desc(memoryItems.createdAt)).limit(20);
-  const allEvaluations = await db.select().from(evaluations).orderBy(desc(evaluations.createdAt));
-  const allPatches = await db.select().from(patchProposals).orderBy(desc(patchProposals.createdAt));
-  const allJobs = await db.select().from(jobs).orderBy(desc(jobs.createdAt)).limit(30);
+app.get("/v1/overview", async (request) => {
+  const organizationId = await resolveOrganizationId(request.headers.authorization);
+  const [organization] = await db.select().from(organizations).where(eq(organizations.id, organizationId));
+  const [project] = await db.select().from(projects).where(eq(projects.organizationId, organizationId)).limit(1);
+  const allMissions = await db
+    .select()
+    .from(missions)
+    .where(eq(missions.organizationId, organizationId))
+    .orderBy(desc(missions.createdAt));
+  const allAgents = await db.select().from(agents).where(eq(agents.organizationId, organizationId));
+  const allPolicies = await db.select().from(policies).where(eq(policies.organizationId, organizationId));
+  const allApprovals = await db
+    .select()
+    .from(approvals)
+    .where(eq(approvals.organizationId, organizationId))
+    .orderBy(desc(approvals.createdAt));
+  const allEvidence = await db
+    .select()
+    .from(evidence)
+    .where(eq(evidence.organizationId, organizationId))
+    .orderBy(desc(evidence.createdAt));
+  const allAudit = await db
+    .select()
+    .from(auditEvents)
+    .where(eq(auditEvents.organizationId, organizationId))
+    .orderBy(desc(auditEvents.createdAt))
+    .limit(30);
+  const allMemory = await db
+    .select()
+    .from(memoryItems)
+    .where(eq(memoryItems.organizationId, organizationId))
+    .orderBy(desc(memoryItems.createdAt))
+    .limit(20);
+  const allEvaluations = await db
+    .select()
+    .from(evaluations)
+    .where(eq(evaluations.organizationId, organizationId))
+    .orderBy(desc(evaluations.createdAt));
+  const allPatches = await db
+    .select()
+    .from(patchProposals)
+    .where(eq(patchProposals.organizationId, organizationId))
+    .orderBy(desc(patchProposals.createdAt));
+  const allJobs = await db
+    .select()
+    .from(jobs)
+    .where(eq(jobs.organizationId, organizationId))
+    .orderBy(desc(jobs.createdAt))
+    .limit(30);
   const allImprovements = await db
     .select()
     .from(improvementProposals)
+    .where(eq(improvementProposals.organizationId, organizationId))
     .orderBy(desc(improvementProposals.createdAt));
 
   return {
@@ -184,13 +325,17 @@ app.get("/v1/overview", async () => {
   };
 });
 
-app.get("/v1/projects", async () => db.select().from(projects).orderBy(desc(projects.createdAt)));
+app.get("/v1/projects", async (request) => {
+  const organizationId = await resolveOrganizationId(request.headers.authorization);
+  return db.select().from(projects).where(eq(projects.organizationId, organizationId)).orderBy(desc(projects.createdAt));
+});
 
 app.post("/v1/projects", async (request, reply) => {
   const body = createProjectSchema.parse(request.body);
+  const organizationId = await resolveOrganizationId(request.headers.authorization);
   const project = {
     id: body.id ?? `com.agentops.${slug(body.name)}`,
-    organizationId: body.organization_id ?? config.defaultOrganizationId,
+    organizationId,
     name: body.name,
     type: body.type,
     criticality: body.criticality,
@@ -697,6 +842,91 @@ function slug(input: string) {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ".")
     .replace(/(^\.|\.$)/g, "");
+}
+
+function normalizeEmail(input: string) {
+  return input.trim().toLowerCase();
+}
+
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const derived = (await scrypt(password, salt, 64)) as Buffer;
+  return `scrypt:${salt}:${derived.toString("hex")}`;
+}
+
+async function verifyPassword(password: string, stored: string) {
+  const [scheme, salt, hash] = stored.split(":");
+  if (scheme !== "scrypt" || !salt || !hash) return false;
+  const derived = (await scrypt(password, salt, 64)) as Buffer;
+  const expected = Buffer.from(hash, "hex");
+  return derived.length === expected.length && timingSafeEqual(derived, expected);
+}
+
+function hashToken(token: string) {
+  return createHash("sha256").update(token).digest("hex");
+}
+
+async function createSession(userId: string, organizationId: string) {
+  const token = `aos_${randomBytes(32).toString("base64url")}`;
+  const now = new Date();
+  await db.insert(userSessions).values({
+    id: id("ses"),
+    userId,
+    organizationId,
+    tokenHash: hashToken(token),
+    expiresAt: new Date(now.getTime() + sessionTtlMs),
+    revokedAt: null,
+    createdAt: now,
+    lastSeenAt: now
+  });
+  return token;
+}
+
+async function verifySessionToken(token: string) {
+  if (!token.startsWith("aos_")) return false;
+  const [session] = await db.select().from(userSessions).where(eq(userSessions.tokenHash, hashToken(token)));
+  if (!session || session.revokedAt || session.expiresAt <= new Date()) return false;
+  await db.update(userSessions).set({ lastSeenAt: new Date() }).where(eq(userSessions.id, session.id));
+  return true;
+}
+
+async function requireUserSession(authorization: string | string[] | undefined) {
+  const token = extractBearerToken(authorization);
+  if (!token) throw new ApiError(401, "AUTH_REQUIRED", "Sign in required.");
+  const [session] = await db.select().from(userSessions).where(eq(userSessions.tokenHash, hashToken(token)));
+  if (!session || session.revokedAt || session.expiresAt <= new Date()) {
+    throw new ApiError(401, "SESSION_EXPIRED", "Session expired. Sign in again.");
+  }
+  const [user] = await db.select().from(userAccounts).where(eq(userAccounts.id, session.userId));
+  if (!user || user.status !== "active") {
+    throw new ApiError(401, "SESSION_INVALID", "Session invalid.");
+  }
+  await db.update(userSessions).set({ lastSeenAt: new Date() }).where(eq(userSessions.id, session.id));
+  return { session, user };
+}
+
+async function resolveOrganizationId(authorization: string | string[] | undefined) {
+  const token = extractBearerToken(authorization);
+  if (!token?.startsWith("aos_")) return config.defaultOrganizationId;
+  const { user } = await requireUserSession(authorization);
+  return user.organizationId;
+}
+
+function extractBearerToken(value: string | string[] | undefined) {
+  const authorization = Array.isArray(value) ? value[0] : value;
+  if (!authorization?.startsWith("Bearer ")) return "";
+  return authorization.slice("Bearer ".length).trim();
+}
+
+function publicUser(user: typeof userAccounts.$inferSelect) {
+  return {
+    id: user.id,
+    organization_id: user.organizationId,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    language: user.language
+  };
 }
 
 function shouldInitializeKernelFiles() {

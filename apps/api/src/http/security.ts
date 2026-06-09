@@ -6,6 +6,7 @@ export interface HttpSecurityOptions {
   operatorToken?: string;
   rateLimitWindowMs: number;
   rateLimitMax: number;
+  userTokenVerifier?: (token: string, request: FastifyRequest) => Promise<boolean>;
 }
 
 export function isOriginAllowed(
@@ -30,7 +31,9 @@ export function isOperatorAuthorized(
 
 export function shouldBypassOperatorAuth(method: string, url: string) {
   if (method === "OPTIONS") return true;
-  return ["/live", "/ready", "/health"].some((path) => url === path || url.startsWith(`${path}?`));
+  return ["/live", "/ready", "/health", "/v1/auth/signup", "/v1/auth/login"].some(
+    (path) => url === path || url.startsWith(`${path}?`)
+  );
 }
 
 export function securityHeaders() {
@@ -62,6 +65,8 @@ export function configureHttpSecurity(app: FastifyInstance, options: HttpSecurit
   app.addHook("preHandler", async (request, reply) => {
     if (shouldBypassOperatorAuth(request.method, request.url)) return;
     if (isOperatorAuthorized(request.headers, options.operatorToken)) return;
+    const token = bearerToken(request.headers.authorization);
+    if (token && options.userTokenVerifier && (await options.userTokenVerifier(token, request))) return;
 
     return sendSecurityError(reply, 401, "OPERATOR_AUTH_REQUIRED", "Operator authentication required.");
   });
@@ -93,6 +98,12 @@ function checkKey(request: FastifyRequest) {
 
 function headerValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value;
+}
+
+function bearerToken(value: string | string[] | undefined) {
+  const authorization = headerValue(value);
+  if (!authorization?.startsWith("Bearer ")) return "";
+  return authorization.slice("Bearer ".length).trim();
 }
 
 function sendSecurityError(reply: FastifyReply, statusCode: number, code: string, message: string) {

@@ -1,5 +1,5 @@
 const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:3000";
-const OPERATOR_TOKEN_KEY = "agentops.operatorToken";
+const SESSION_TOKEN_KEY = "agentops.sessionToken";
 
 export class ApiClientError extends Error {
   status: number;
@@ -15,26 +15,26 @@ export class ApiClientError extends Error {
   }
 }
 
-export function getOperatorToken() {
+export function getSessionToken() {
   try {
-    return localStorage.getItem(OPERATOR_TOKEN_KEY) ?? "";
+    return localStorage.getItem(SESSION_TOKEN_KEY) ?? "";
   } catch {
     return "";
   }
 }
 
-export function saveOperatorToken(token: string) {
+export function saveSessionToken(token: string) {
   try {
     const trimmed = token.trim();
-    if (trimmed) localStorage.setItem(OPERATOR_TOKEN_KEY, trimmed);
-    else localStorage.removeItem(OPERATOR_TOKEN_KEY);
+    if (trimmed) localStorage.setItem(SESSION_TOKEN_KEY, trimmed);
+    else localStorage.removeItem(SESSION_TOKEN_KEY);
   } catch {
     // Storage can be unavailable in strict browser contexts.
   }
 }
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = getOperatorToken();
+  const token = getSessionToken();
   const response = await fetch(`${API_URL}${path}`, {
     ...init,
     headers: {

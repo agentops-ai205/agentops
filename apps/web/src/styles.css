@@ -2,8 +2,8 @@
   color-scheme: light;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #eef2ef;
-  color: #1c2423;
+  background: #f3f5f2;
+  color: #18211f;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -24,440 +24,451 @@ textarea {
   font: inherit;
 }
 
-button {
+button,
+.buttonLike {
   align-items: center;
   background: #ffffff;
-  border: 1px solid #d8dfdc;
+  border: 1px solid #d7dfdc;
   border-radius: 8px;
-  color: #1f2927;
+  color: #1e2926;
   cursor: pointer;
   display: inline-flex;
   gap: 8px;
   justify-content: center;
-  min-height: 38px;
-  padding: 0 12px;
+  min-height: 40px;
+  padding: 0 13px;
+  text-decoration: none;
 }
 
-button:hover:not(:disabled) {
-  border-color: #8eb9ab;
-  color: #0c5f49;
+button:hover:not(:disabled),
+.buttonLike:hover {
+  border-color: #6da58f;
+  color: #0c6048;
 }
 
 button:disabled {
-  color: #99a29f;
+  color: #9aa5a0;
   cursor: not-allowed;
-  opacity: 0.72;
+  opacity: 0.7;
 }
 
 input,
 select,
 textarea {
   background: #ffffff;
-  border: 1px solid #d9e1de;
+  border: 1px solid #d8e0dd;
   border-radius: 8px;
-  color: #1d2725;
+  color: #1c2724;
   min-width: 0;
   outline: 0;
   padding: 11px 12px;
   width: 100%;
 }
 
-select {
-  appearance: none;
-}
-
 textarea {
   line-height: 1.45;
-  min-height: 96px;
+  min-height: 104px;
   resize: vertical;
 }
 
-.appShell {
-  background:
-    linear-gradient(90deg, rgba(55, 173, 198, 0.28), transparent 18%),
-    linear-gradient(110deg, transparent 78%, rgba(244, 185, 55, 0.34)),
-    #eef2ef;
-  display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
+.primaryButton {
+  background: #194c3d;
+  border-color: #194c3d;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.primaryButton:hover:not(:disabled),
+.buttonLike.primaryButton:hover {
+  background: #12372d;
+  color: #ffffff;
+}
+
+.publicShell,
+.authPage {
+  background: #f3f5f2;
   min-height: 100vh;
-  padding: 12px;
 }
 
-.sidebar {
-  background: rgba(238, 244, 241, 0.74);
-  border: 1px solid rgba(210, 219, 216, 0.8);
-  border-radius: 12px 0 0 12px;
-  display: grid;
-  grid-template-rows: auto auto auto 1fr auto;
-  min-height: calc(100vh - 24px);
-  padding: 18px 14px;
-}
-
-.brandBlock,
-.workspaceUser,
-.topbar,
-.workspaceTabs,
-.systemStatus,
-.panelHeader,
-.repoBar,
-.workTabs,
-.buttonRow,
+.publicHeader,
+.brandRow,
+.headerActions,
+.heroActions,
+.languageSelect,
 .sectionHeader,
-.jobRow,
-.evidenceRow,
-.authStrip,
-.brandButton,
-.searchBox,
-.missionComposer > div {
+.appTopbar,
+.topbarActions,
+.statusBanner,
+.systemPill,
+.statTile,
+.recordRow,
+.previewTop {
   align-items: center;
   display: flex;
   gap: 10px;
 }
 
-.brandBlock {
+.publicHeader {
+  border-bottom: 1px solid #dce3e0;
   justify-content: space-between;
-}
-
-.brandMark,
-.operatorAvatar {
-  align-items: center;
-  background: #21443b;
-  border-radius: 9px;
-  color: #f8fbf8;
-  display: flex;
-  font-weight: 900;
-  justify-content: center;
+  min-height: 72px;
+  padding: 0 32px;
 }
 
 .brandMark {
-  height: 34px;
-  width: 34px;
+  align-items: center;
+  background: #1f463d;
+  border-radius: 8px;
+  color: #ffffff;
+  display: flex;
+  font-weight: 900;
+  height: 36px;
+  justify-content: center;
+  width: 36px;
 }
 
-.brandButton {
-  background: transparent;
-  border: 0;
-  flex: 1;
-  justify-content: space-between;
-  padding: 0 4px;
-}
-
-.newMissionButton {
-  background: #ffffff;
-  border-color: #e3e9e6;
-  box-shadow: 0 8px 22px rgba(54, 73, 67, 0.08);
-  font-weight: 800;
-  justify-content: flex-start;
-  margin: 22px 0 16px;
-}
-
-.mainNav,
-.sideSection,
-.missionList,
-.agentActions,
-.workSurface,
-.jobList,
-.evidenceList,
-.patchPanel,
-.dashboardPanel,
-.missionPanel,
-.ideGrid,
-.ideExplorer,
-.ideEditor,
-.ideRuntime,
-.metricsGrid,
-.cockpitGrid,
-.agentRunForm,
-.terminalForm,
-.patchForm,
-.evidenceForm,
-.missionModal {
-  display: grid;
-}
-
-.hiddenSurface {
-  display: none;
-}
-
-.mainNav {
-  gap: 4px;
-}
-
-.mainNav button,
-.sideSection button {
-  background: transparent;
-  border: 0;
-  color: #68736f;
-  justify-content: flex-start;
-  min-height: 39px;
-}
-
-.mainNav button.active {
-  background: rgba(36, 68, 60, 0.08);
-  color: #1e332f;
-  font-weight: 850;
-}
-
-.sideSection {
-  align-content: start;
-  border-top: 1px solid rgba(206, 216, 212, 0.75);
-  gap: 4px;
-  margin-top: 20px;
-  padding-top: 18px;
-}
-
-.sideSection > span,
-.panelHeader span,
-.sectionHeader span,
-.workSurface label > span,
-.terminalOutput span,
-.metricTile span {
-  color: #77837f;
-  font-size: 11px;
-  font-weight: 850;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.workspaceUser {
-  border-top: 1px solid rgba(206, 216, 212, 0.75);
-  padding-top: 15px;
-}
-
-.workspaceUser strong,
-.workspaceUser span {
+.brandRow strong,
+.brandRow span {
   display: block;
 }
 
-.workspaceUser span {
-  color: #7a8581;
+.brandRow span,
+.heroCopy span,
+.authLayout span,
+.sectionHeader span,
+.missionDetailHeader span,
+.recordPanel span,
+.systemPill span,
+.statTile span {
+  color: #6f7a76;
   font-size: 12px;
 }
 
-.mainSurface {
-  background: rgba(248, 250, 247, 0.78);
-  border: 1px solid rgba(210, 219, 216, 0.8);
-  border-left: 0;
-  border-radius: 0 12px 12px 0;
-  box-shadow: 0 24px 70px rgba(68, 88, 82, 0.18);
-  min-width: 0;
+.languageSelect {
+  background: #ffffff;
+  border: 1px solid #d7dfdc;
+  border-radius: 8px;
+  padding: 0 8px;
+}
+
+.languageSelect select {
+  border: 0;
+  min-height: 38px;
+  padding: 0 6px;
+  width: auto;
+}
+
+.heroBand {
+  align-items: center;
+  display: grid;
+  gap: 42px;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 560px);
+  margin: 0 auto;
+  max-width: 1180px;
+  min-height: calc(100vh - 220px);
+  padding: 64px 32px 42px;
+}
+
+.heroCopy h1,
+.authLayout h1 {
+  font-size: clamp(44px, 7vw, 86px);
+  letter-spacing: 0;
+  line-height: 0.95;
+  margin: 14px 0 20px;
+}
+
+.heroCopy p,
+.authLayout p,
+.desktopPanel p {
+  color: #4e5b56;
+  font-size: 18px;
+  line-height: 1.55;
+  margin: 0;
+  max-width: 720px;
+}
+
+.heroActions {
+  flex-wrap: wrap;
+  margin-top: 28px;
+}
+
+.productPreview {
+  background: #ffffff;
+  border: 1px solid #dce3e0;
+  border-radius: 8px;
+  box-shadow: 0 24px 54px rgba(41, 57, 52, 0.12);
+  min-height: 360px;
   overflow: hidden;
 }
 
-.topbar {
-  border-bottom: 1px solid #dce5e1;
-  justify-content: space-between;
-  min-height: 70px;
+.previewTop {
+  border-bottom: 1px solid #e1e7e4;
+  min-height: 54px;
   padding: 0 18px;
 }
 
-.workspaceTabs {
-  flex-wrap: wrap;
-}
-
-.workspaceTabs button {
-  background: transparent;
-  border: 0;
-  color: #66726d;
-  min-height: 40px;
-}
-
-.workspaceTabs button.active {
-  background: #ffffff;
-  box-shadow: 0 8px 20px rgba(55, 75, 69, 0.08);
-  color: #1e342f;
-  font-weight: 850;
-}
-
-.systemStatus {
-  color: #66726d;
-  font-size: 13px;
-}
-
-.statusDot {
-  background: #e4a72e;
+.previewTop span {
+  background: #cfd8d4;
   border-radius: 999px;
-  height: 8px;
-  width: 8px;
+  height: 10px;
+  width: 10px;
 }
 
-.statusDot.live {
-  background: #17a56d;
+.previewTop strong {
+  margin-left: 10px;
 }
 
-.systemStatus button {
-  min-height: 34px;
-  min-width: 34px;
-  padding: 0;
-}
-
-.operatorAvatar {
-  background: #dc7f3d;
-  height: 34px;
-  width: 34px;
-}
-
-.authStrip {
-  background: #fff7e2;
-  border-bottom: 1px solid #ead8aa;
-  padding: 12px 18px;
-}
-
-.authStrip input {
-  max-width: 360px;
-}
-
-.productionStrip {
-  align-items: stretch;
-  border-bottom: 1px solid #dce5e1;
+.previewGrid,
+.publicFeatureGrid,
+.statsGrid,
+.actionGrid,
+.desktopStatusGrid {
   display: grid;
-  gap: 8px;
-  grid-template-columns: repeat(5, minmax(120px, 1fr)) auto;
-  padding: 10px 12px;
-}
-
-.productionStat {
-  align-items: center;
-  background: #ffffff;
-  border: 1px solid #e0e7e4;
-  border-radius: 8px;
-  display: grid;
-  gap: 2px 8px;
-  grid-template-columns: 24px minmax(0, 1fr);
-  min-height: 58px;
-  padding: 9px 10px;
-}
-
-.productionStat svg {
-  grid-row: span 2;
-}
-
-.productionStat.green svg {
-  color: #167556;
-}
-
-.productionStat.amber svg {
-  color: #a66c11;
-}
-
-.productionStat span {
-  color: #77837f;
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.productionStat strong {
-  font-size: 12px;
-  line-height: 1.25;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.productionActions {
-  align-content: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  justify-content: flex-end;
-  min-width: 210px;
-}
-
-.productionActions button {
-  min-height: 58px;
-}
-
-.cockpitGrid {
   gap: 12px;
-  grid-template-columns: minmax(250px, 0.9fr) minmax(300px, 1.12fr) minmax(250px, 1fr);
-  min-height: calc(100vh - 94px);
-  padding: 12px;
 }
 
-.missionPanel,
-.patchPanel,
-.dashboardPanel {
-  align-content: start;
-  background: rgba(255, 255, 255, 0.72);
-  border: 1px solid #dce5e1;
-  border-radius: 8px;
-  max-height: calc(100vh - 118px);
-  min-width: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
+.previewGrid {
+  grid-template-columns: 1fr;
   padding: 18px;
 }
 
-.missionPanel *,
-.patchPanel *,
-.dashboardPanel * {
-  min-width: 0;
+.previewGrid > div,
+.featureItem,
+.statTile,
+.recordPanel,
+.createMissionForm,
+.missionDetailHeader,
+.evidenceComposer,
+.desktopPanel,
+.emptyState {
+  background: #ffffff;
+  border: 1px solid #dce3e0;
+  border-radius: 8px;
 }
 
-.missionPanel {
-  gap: 16px;
+.previewGrid > div {
+  display: grid;
+  gap: 7px;
+  min-height: 86px;
+  padding: 15px;
 }
 
-.patchPanel,
-.dashboardPanel {
-  gap: 14px;
+.previewGrid svg,
+.featureItem svg,
+.statTile svg {
+  color: #146a4e;
 }
 
-.panelHeader {
-  flex-wrap: wrap;
-  justify-content: space-between;
+.publicFeatureGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 0 32px 52px;
 }
 
-.panelHeader > div {
-  flex: 1 1 180px;
+.featureItem {
+  display: grid;
+  gap: 8px;
+  min-height: 150px;
+  padding: 18px;
 }
 
-.patchPanel > *,
-.missionPanel > *,
-.dashboardPanel > * {
-  max-width: 100%;
-  width: 100%;
-}
-
-.panelHeader h1,
-.panelHeader h2,
-.panelHeader p {
+.featureItem p {
+  color: #5f6b67;
+  line-height: 1.45;
   margin: 0;
 }
 
-.panelHeader h1 {
-  font-size: 25px;
-  line-height: 1.08;
-  margin-top: 18px;
+.authLayout {
+  align-items: start;
+  display: grid;
+  gap: 46px;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 430px);
+  margin: 0 auto;
+  max-width: 1060px;
+  padding: 68px 32px;
 }
 
-.panelHeader h2 {
-  font-size: 18px;
-  line-height: 1.2;
-  margin-top: 4px;
+.authPanel {
+  background: #ffffff;
+  border: 1px solid #dce3e0;
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  padding: 22px;
 }
 
-.panelHeader p {
-  color: #6c7873;
-  font-size: 14px;
-  line-height: 1.45;
-  margin-top: 7px;
+.authPanel label,
+.createMissionForm,
+.evidenceComposer {
+  display: grid;
+  gap: 8px;
 }
 
-.panelHeader.compact {
-  align-items: flex-start;
+.formError {
+  background: #fff1ec;
+  border: 1px solid #efc7ba;
+  border-radius: 8px;
+  color: #8a321c;
+  margin: 0;
+  padding: 10px 12px;
+}
+
+.productShell {
+  background: #eef2ef;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.appSidebar {
+  background: #f9fbf8;
+  border-right: 1px solid #d9e1de;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: 22px 16px;
+}
+
+.appNav {
+  align-content: start;
+  display: grid;
+  gap: 6px;
+  margin-top: 28px;
+}
+
+.appNav button {
+  background: transparent;
+  border: 0;
+  color: #65716d;
+  justify-content: flex-start;
+}
+
+.appNav button.active {
+  background: #e9f3ee;
+  color: #124f3c;
+  font-weight: 850;
+}
+
+.sidebarFooter {
+  border-top: 1px solid #dce3e0;
+  display: grid;
+  gap: 10px;
+  padding-top: 16px;
+}
+
+.appSurface {
+  min-width: 0;
+  padding: 18px;
+}
+
+.appTopbar {
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.appTopbar h1 {
+  font-size: 28px;
+  line-height: 1.1;
+  margin: 3px 0 0;
+}
+
+.topbarActions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.systemPill {
+  background: #ffffff;
+  border: 1px solid #dce3e0;
+  border-radius: 8px;
+  display: grid;
+  gap: 2px;
+  min-height: 42px;
+  min-width: 118px;
+  padding: 7px 10px;
+}
+
+.systemPill.ok {
+  border-color: #95c6b4;
+}
+
+.systemPill strong,
+.statTile strong {
+  line-height: 1.05;
+}
+
+.statusBanner {
+  background: #eef8f3;
+  border: 1px solid #b7dcca;
+  border-radius: 8px;
+  color: #155b45;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+}
+
+.statusBanner button {
+  min-height: 30px;
+  padding: 0 8px;
+}
+
+.statsGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 14px;
+}
+
+.statTile {
+  display: grid;
+  gap: 5px 10px;
+  grid-template-columns: 30px minmax(0, 1fr);
+  min-height: 78px;
+  padding: 14px;
+}
+
+.statTile svg {
+  grid-row: span 2;
+}
+
+.statTile strong {
+  font-size: 26px;
+}
+
+.workspaceGrid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: minmax(300px, 0.75fr) minmax(0, 1.25fr);
+}
+
+.missionColumn,
+.detailColumn {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+.createMissionForm,
+.missionDetailHeader,
+.evidenceComposer,
+.desktopPanel {
+  padding: 16px;
+}
+
+.sectionHeader {
+  justify-content: space-between;
+}
+
+.sectionHeader strong {
+  display: block;
 }
 
 .searchBox {
+  align-items: center;
   background: #ffffff;
-  border: 1px solid #dce4e1;
+  border: 1px solid #dce3e0;
   border-radius: 8px;
-  padding: 0 11px;
+  display: flex;
+  gap: 8px;
+  padding: 0 12px;
 }
 
 .searchBox input {
@@ -465,808 +476,195 @@ textarea {
   padding-left: 0;
 }
 
-.missionList {
+.missionList,
+.recordList {
+  display: grid;
   gap: 9px;
 }
 
 .missionItem {
-  background: #ffffff;
-  border-color: #e0e7e4;
+  align-items: start;
   display: grid;
-  gap: 10px;
-  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 6px;
   justify-content: stretch;
-  min-height: 72px;
-  padding: 10px;
+  min-height: 92px;
+  padding: 13px;
   text-align: left;
-}
-
-.missionItem .badge {
-  grid-column: 2;
-  justify-self: start;
 }
 
 .missionItem.active {
-  border-color: #8bb9ab;
-  box-shadow: 0 0 0 2px rgba(24, 133, 97, 0.1);
+  border-color: #78ad99;
+  box-shadow: 0 0 0 2px rgba(25, 76, 61, 0.1);
 }
 
-.missionItem > span,
-.jobRow > svg {
-  align-items: center;
-  background: #ecf5f0;
-  border-radius: 8px;
-  color: #167556;
-  display: flex;
-  height: 34px;
-  justify-content: center;
-  width: 34px;
-}
-
-.missionItem strong,
-.missionItem small {
-  display: block;
-}
-
-.missionItem small {
-  color: #72807a;
-  font-size: 12px;
-  line-height: 1.35;
-  max-height: 34px;
-  overflow: hidden;
-}
-
-.agentActions {
-  gap: 9px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.actionCard {
-  align-items: center;
-  background: #ffffff;
-  border-color: #e0e7e4;
-  display: grid;
-  gap: 10px;
-  grid-template-columns: 30px minmax(0, 1fr) auto;
-  justify-content: stretch;
-  min-height: 66px;
-  padding: 10px;
-  text-align: left;
-}
-
-.actionCard > svg:first-child {
-  color: #188561;
-}
-
-.actionCard strong,
-.actionCard span {
-  display: block;
-}
-
-.actionCard span {
-  color: #77837f;
-  font-size: 12px;
-}
-
-.missionComposer {
-  background: #ffffff;
-  border: 1px solid #dce4e1;
-  border-radius: 10px;
-  display: grid;
-  gap: 8px;
-  padding: 10px;
-}
-
-.missionComposer textarea {
-  border: 0;
-  min-height: 70px;
-  padding: 4px;
-}
-
-.missionComposer > div {
-  justify-content: space-between;
-}
-
-.missionComposer button {
-  min-height: 36px;
-  min-width: 36px;
-  padding: 0;
-}
-
-.sendButton {
-  background: #1f463d;
-  color: #ffffff;
-}
-
-.repoBar {
-  background: #f4f7f5;
-  border: 1px solid #e0e7e4;
-  border-radius: 8px;
-  min-height: 42px;
-  padding: 0 12px;
-  width: 100%;
-}
-
-.repoBar strong {
-  flex: 1;
+.missionItem span,
+.recordRow span {
+  color: #65716d;
   font-size: 13px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.repoBar span {
-  color: #65736e;
-  font-size: 12px;
-}
-
-.workTabs {
-  border-bottom: 1px solid #dce4e1;
-  flex-wrap: nowrap;
-  gap: 6px;
-  overflow-x: auto;
-  scrollbar-width: thin;
-  width: 100%;
-}
-
-.workTabs button {
-  background: transparent;
-  border: 0;
-  border-radius: 8px 8px 0 0;
-  color: #697772;
-  flex: 0 0 auto;
-  padding: 0 10px;
-}
-
-.workTabs button.active {
-  background: #eef6f2;
-  color: #176d52;
-  font-weight: 850;
-}
-
-.workSurface {
-  min-height: 390px;
-}
-
-.agentRunForm,
-.terminalForm,
-.patchForm,
-.evidenceForm {
-  gap: 12px;
-}
-
-.fieldGrid {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-}
-
-.workSurface label,
-.missionModal label {
-  display: grid;
-  gap: 7px;
-}
-
-.diffInput,
-.terminalForm pre {
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-}
-
-.diffInput {
-  min-height: 210px;
-}
-
-.terminalForm pre {
-  background: #17211e;
-  border-radius: 8px;
-  color: #d9e8e1;
-  line-height: 1.55;
-  margin: 0;
-  overflow: auto;
-  padding: 14px;
-  white-space: pre-wrap;
-}
-
-.buttonRow {
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.buttonRow button:last-child,
-.authStrip button {
-  background: #1f463d;
-  border-color: #1f463d;
-  color: #ffffff;
-}
-
-.terminalOutput {
-  background: #f6f8f6;
-  border: 1px solid #e0e7e4;
-  border-radius: 8px;
-  display: grid;
-  gap: 4px;
-  padding: 12px;
-}
-
-.terminalOutput strong {
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-.terminalOutput small {
-  color: #77837f;
-}
-
-.browserChrome {
-  align-items: center;
-  background: #f4f7f5;
-  border: 1px solid #e0e7e4;
-  border-radius: 8px;
-  display: flex;
-  gap: 8px;
-  min-height: 42px;
-  padding: 0 10px;
-}
-
-.browserChrome span {
-  background: #cbd5d1;
-  border-radius: 999px;
-  height: 9px;
-  width: 9px;
-}
-
-.browserChrome strong {
-  flex: 1;
-  font-size: 13px;
-  margin-left: 8px;
-}
-
-.browserChrome button {
-  color: #176d52;
-  font-size: 12px;
-  min-height: 28px;
-}
-
-.metricsGrid {
-  gap: 10px;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.metricTile {
-  background: #ffffff;
-  border: 1px solid #e0e7e4;
-  border-radius: 8px;
-  display: grid;
-  gap: 5px;
-  min-height: 86px;
-  padding: 12px;
-}
-
-.metricTile strong {
-  font-size: 23px;
-  line-height: 1;
-}
-
-.metricTile em {
-  color: #167556;
-  font-size: 12px;
-  font-style: normal;
-}
-
-.metricTile.amber em {
-  color: #a66c11;
-}
-
-.chartPanel,
-.jobsPanel,
-.approvalPanel,
-.evidencePanel {
-  background: #ffffff;
-  border: 1px solid #e0e7e4;
-  border-radius: 8px;
-  padding: 14px;
-}
-
-.chartPanel > div {
-  align-items: center;
-  display: flex;
-  justify-content: space-between;
-}
-
-.chartPanel strong,
-.sectionHeader strong {
-  display: block;
-  font-size: 14px;
-}
-
-.throughputChart {
-  display: block;
-  height: 160px;
-  margin-top: 10px;
-  width: 100%;
-}
-
-.throughputChart path {
-  fill: none;
-  stroke: #edf1ef;
-  stroke-width: 1;
-}
-
-.throughputChart polyline {
-  fill: none;
-  stroke: #4f85c7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 4;
-}
-
-.throughputChart circle {
-  fill: #ffffff;
-  stroke: #4f85c7;
-  stroke-width: 3;
-}
-
-.sectionHeader {
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.sectionHeader button {
-  min-height: 34px;
-}
-
-.approvalActions {
-  display: grid;
-  gap: 8px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.approvalActions button:first-child {
-  background: #1f463d;
-  border-color: #1f463d;
-  color: #ffffff;
-}
-
-.approvalActions button:nth-child(2) {
-  background: #fff7e2;
-  border-color: #ead8aa;
-  color: #8a6415;
-}
-
-.approvalActions button:nth-child(3) {
-  background: #fff0ed;
-  border-color: #efc4bb;
-  color: #9b3727;
-}
-
-.jobList,
-.evidenceList {
-  gap: 8px;
-}
-
-.jobRow,
-.evidenceRow {
-  border-top: 1px solid #edf1ef;
-  display: grid;
-  gap: 10px;
-  grid-template-columns: 34px minmax(0, 1fr) auto;
-  min-height: 54px;
-  padding-top: 8px;
-}
-
-.jobRow strong,
-.jobRow span,
-.evidenceRow strong,
-.evidenceRow span {
-  display: block;
-}
-
-.jobRow span,
-.evidenceRow span,
-.evidenceRow time {
-  color: #78847f;
-  font-size: 12px;
-}
-
-.evidenceRow svg {
-  color: #188561;
-  margin-top: 2px;
-}
-
-.ideGrid {
-  gap: 12px;
-  grid-template-columns: 250px minmax(420px, 1fr) 360px;
-  min-height: calc(100vh - 94px);
-  padding: 12px;
-}
-
-.ideExplorer,
-.ideEditor,
-.ideRuntime {
-  align-content: start;
-  background: rgba(255, 255, 255, 0.76);
-  border: 1px solid #dce5e1;
-  border-radius: 8px;
-  max-height: calc(100vh - 118px);
-  min-width: 0;
-  overflow: hidden;
-  padding: 14px;
-}
-
-.ideExplorer,
-.ideRuntime {
-  gap: 12px;
-}
-
-.ideEditor {
-  grid-template-rows: auto minmax(0, 1fr);
-  padding: 0;
-}
-
-.fileTree {
-  display: grid;
-  gap: 5px;
-  max-height: calc(100vh - 210px);
-  overflow: auto;
-  padding-right: 3px;
-}
-
-.fileRow {
-  background: transparent;
-  border: 0;
-  color: #53615d;
-  display: grid;
-  font-size: 13px;
-  grid-template-columns: 22px minmax(0, 1fr);
-  justify-content: stretch;
-  min-height: 34px;
-  padding: 0 6px;
-  text-align: left;
-}
-
-.fileRow span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.fileRow.directory {
-  color: #205c4b;
-  font-weight: 800;
-}
-
-.fileRow:hover {
-  background: #eef6f2;
-}
-
-.ideEditorHeader {
-  align-items: center;
-  border-bottom: 1px solid #dce5e1;
-  display: flex;
-  gap: 12px;
-  justify-content: space-between;
-  min-height: 62px;
-  padding: 10px 14px;
-}
-
-.ideEditorHeader > div:first-child {
-  min-width: 0;
-}
-
-.ideEditorHeader span,
-.terminalCard label span,
-.ideStatus span,
-.ideGovernance span,
-.ideEditorHeader small {
-  color: #77837f;
-  font-size: 11px;
-  font-weight: 850;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.ideEditorHeader strong {
-  display: block;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 13px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.ideEditorHeader small {
-  display: block;
-  margin-top: 3px;
-}
-
-.codeEditor {
-  background: #17211e;
-  border: 0;
-  border-radius: 0;
-  color: #e7f0eb;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 13px;
-  line-height: 1.55;
-  min-height: 620px;
-  outline: 0;
-  padding: 16px;
-  resize: none;
-}
-
-.terminalCard,
-.ideStatus,
-.ideGovernance {
-  background: #ffffff;
-  border: 1px solid #e0e7e4;
-  border-radius: 8px;
-  padding: 12px;
-}
-
-.terminalCard {
-  display: grid;
-  gap: 10px;
-}
-
-.terminalCard pre {
-  background: #17211e;
-  border-radius: 8px;
-  color: #dcebe5;
-  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-  font-size: 12px;
-  line-height: 1.55;
-  margin: 0;
-  max-height: 320px;
-  overflow: auto;
-  padding: 12px;
-  white-space: pre-wrap;
-}
-
-.ideStatus {
-  display: grid;
-  gap: 4px;
-}
-
-.ideStatus strong {
-  font-size: 14px;
   line-height: 1.35;
 }
 
-.ideStatus small {
-  color: #77837f;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.missionDetailHeader {
+  align-items: start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
 }
 
-.ideGovernance {
-  display: grid;
-  gap: 10px;
+.missionDetailHeader h2 {
+  font-size: 24px;
+  line-height: 1.15;
+  margin: 4px 0 8px;
 }
 
-.ideGovernance > div {
-  align-items: center;
-  display: grid;
-  gap: 4px 9px;
-  grid-template-columns: 24px minmax(0, 1fr);
-}
-
-.ideGovernance svg {
-  color: #188561;
-  grid-row: span 2;
-}
-
-.ideGovernance strong {
-  font-size: 13px;
+.missionDetailHeader p {
+  color: #4f5d58;
+  line-height: 1.5;
+  margin: 0;
 }
 
 .badge {
-  align-items: center;
-  border: 1px solid #d7e3de;
+  align-self: start;
+  background: #edf5f1;
+  border: 1px solid #cbded6;
   border-radius: 999px;
-  color: #52615c;
-  display: inline-flex;
-  font-size: 10px;
+  color: #155b45;
+  font-size: 11px;
   font-style: normal;
   font-weight: 900;
-  justify-content: center;
-  min-height: 24px;
-  padding: 4px 9px;
+  padding: 5px 8px;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
-.badge.in-progress,
-.badge.approved,
-.badge.succeeded,
-.badge.allow,
-.badge.api-live {
-  background: #e7f6ef;
-  border-color: #b7dece;
-  color: #116c50;
-}
-
 .badge.waiting-approval,
-.badge.require-review,
-.badge.require-approval,
-.badge.running,
-.badge.medium,
-.badge.queued {
-  background: #fff7e2;
-  border-color: #ead8aa;
-  color: #8a6415;
-}
-
-.badge.deny,
-.badge.failed,
 .badge.blocked,
-.badge.risk-rejected {
-  background: #fff0ed;
-  border-color: #efc4bb;
-  color: #9b3727;
+.badge.failed-tests {
+  background: #fff7e6;
+  border-color: #e8c982;
+  color: #80580c;
 }
 
-.modalBackdrop {
+.actionGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.actionGrid button {
+  min-height: 58px;
+}
+
+.recordPanel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.recordRow {
+  background: #f8faf8;
+  border: 1px solid #e1e7e4;
+  border-radius: 8px;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  min-height: 58px;
+  padding: 10px;
+}
+
+.recordRow time {
+  color: #73817b;
+  font-size: 12px;
+}
+
+.emptyState {
   align-items: center;
-  background: rgba(31, 41, 39, 0.22);
+  color: #5f6b67;
   display: flex;
-  inset: 0;
+  gap: 10px;
   justify-content: center;
-  padding: 20px;
-  position: fixed;
-  z-index: 30;
-}
-
-.missionModal {
-  background: #ffffff;
-  border: 1px solid #dce4e1;
-  border-radius: 10px;
-  box-shadow: 0 24px 80px rgba(48, 68, 62, 0.24);
-  gap: 14px;
-  max-width: 560px;
+  min-height: 120px;
   padding: 18px;
-  width: min(100%, 560px);
+  text-align: center;
 }
 
-.missionModal .sectionHeader {
-  margin-bottom: 0;
+.emptyState p {
+  margin: 0;
 }
 
-.missionModal .sectionHeader button {
-  min-width: 34px;
-  padding: 0;
+.desktopPanel {
+  align-items: start;
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) 320px;
+}
+
+.desktopPanel h2 {
+  font-size: 34px;
+  margin: 8px 0 12px;
+}
+
+.desktopStatusGrid {
+  grid-template-columns: 1fr;
 }
 
 @media (max-width: 980px) {
-  .productionStrip {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .productionActions {
-    justify-content: flex-start;
-    min-width: 0;
-  }
-
-  .cockpitGrid {
-    grid-template-columns: minmax(290px, 0.86fr) minmax(360px, 1.1fr);
-  }
-
-  .ideGrid {
-    grid-template-columns: 240px minmax(360px, 1fr);
-  }
-
-  .ideRuntime {
-    grid-column: 1 / -1;
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .dashboardPanel {
-    grid-column: 1 / -1;
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 1040px) {
-  .appShell {
+  .heroBand,
+  .authLayout,
+  .workspaceGrid,
+  .desktopPanel {
     grid-template-columns: 1fr;
   }
 
-  .sidebar {
-    border-radius: 12px 12px 0 0;
-    grid-row: 2;
-    grid-template-rows: auto;
-    min-height: 0;
-  }
-
-  .mainSurface {
-    border-left: 1px solid rgba(210, 219, 216, 0.8);
-    border-radius: 0 0 12px 12px;
-    grid-row: 1;
-  }
-
-  .mainNav,
-  .sideSection {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-
-  .workspaceUser {
-    margin-top: 12px;
-  }
-}
-
-@media (max-width: 860px) {
-  .topbar {
-    align-items: stretch;
-    flex-direction: column;
-    min-height: 0;
-    padding: 12px;
-  }
-
-  .cockpitGrid,
-  .ideGrid,
-  .dashboardPanel,
-  .productionStrip {
-    grid-template-columns: 1fr;
-  }
-
-  .missionPanel,
-  .patchPanel,
-  .dashboardPanel,
-  .ideExplorer,
-  .ideEditor,
-  .ideRuntime {
-    max-height: none;
-    overflow: visible;
-  }
-
-  .codeEditor {
-    min-height: 460px;
-  }
-
-  .metricsGrid,
-  .agentActions,
-  .fieldGrid,
-  .approvalActions,
-  .mainNav,
-  .sideSection {
+  .publicFeatureGrid,
+  .statsGrid,
+  .actionGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-}
 
-@media (max-width: 540px) {
-  .appShell {
-    padding: 8px;
-  }
-
-  .cockpitGrid {
-    padding: 10px;
-  }
-
-  .ideGrid {
-    padding: 10px;
-  }
-
-  .metricsGrid,
-  .agentActions,
-  .approvalActions,
-  .mainNav,
-  .sideSection {
+  .productShell {
     grid-template-columns: 1fr;
   }
 
-  .workTabs {
+  .appSidebar {
+    border-bottom: 1px solid #d9e1de;
+    border-right: 0;
+    grid-template-rows: auto auto auto;
+  }
+
+  .appNav {
+    display: flex;
     flex-wrap: wrap;
-    overflow-x: hidden;
+  }
+}
+
+@media (max-width: 640px) {
+  .publicHeader,
+  .appTopbar {
+    align-items: stretch;
+    display: grid;
   }
 
-  .missionItem,
-  .jobRow,
-  .evidenceRow {
-    grid-template-columns: 30px minmax(0, 1fr);
+  .headerActions,
+  .topbarActions,
+  .heroActions {
+    justify-content: stretch;
   }
 
-  .missionItem .badge,
-  .jobRow .badge,
-  .evidenceRow time {
-    grid-column: 2;
-    justify-self: start;
+  .headerActions > *,
+  .topbarActions > *,
+  .heroActions > * {
+    width: 100%;
+  }
+
+  .heroBand,
+  .authLayout,
+  .publicFeatureGrid,
+  .appSurface {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .publicFeatureGrid,
+  .statsGrid,
+  .actionGrid {
+    grid-template-columns: 1fr;
   }
 }

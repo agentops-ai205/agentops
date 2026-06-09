@@ -15,6 +15,30 @@ export const organizations = pgTable("organizations", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull()
 });
 
+export const userAccounts = pgTable("user_accounts", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id").notNull(),
+  email: text("email").notNull(),
+  name: text("name").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  role: text("role").notNull().default("owner"),
+  language: text("language").notNull().default("en"),
+  status: text("status").notNull().default("active"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull()
+});
+
+export const userSessions = pgTable("user_sessions", {
+  id: text("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  organizationId: text("organization_id").notNull(),
+  tokenHash: text("token_hash").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  lastSeenAt: timestamp("last_seen_at", { withTimezone: true })
+});
+
 export const projects = pgTable("projects", {
   id: text("id").primaryKey(),
   organizationId: text("organization_id").notNull().default("org.default"),

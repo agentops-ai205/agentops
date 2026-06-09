@@ -1,76 +1,38 @@
 import {
   Activity,
-  AlertTriangle,
-  ArrowUpRight,
+  ArrowRight,
   BadgeCheck,
   Bot,
   BriefcaseBusiness,
   Check,
-  ChevronDown,
-  CircleDot,
-  Clock3,
   Code2,
+  Download,
   FileCheck2,
   FileDiff,
-  Gauge,
-  Hammer,
+  Globe2,
   History,
-  Home,
   KeyRound,
+  Languages,
+  LayoutDashboard,
   ListChecks,
-  Mic,
-  Pause,
-  Play,
+  LogOut,
   Plus,
   Search,
   Send,
-  Shield,
   ShieldCheck,
-  SlidersHorizontal,
-  Sparkles,
   TerminalSquare,
-  UserCircle2,
-  Wrench,
+  UserPlus,
+  Users,
   X
 } from "lucide-react";
 import { useEffect, useMemo, useState, type FormEvent, type ReactElement } from "react";
-import { API_URL, ApiClientError, api, getOperatorToken, saveOperatorToken } from "./api";
-import {
-  applyDesktopPatch,
-  getDesktopRuntime,
-  hasDesktopRuntime,
-  listDesktopFiles,
-  readDesktopFile,
-  runDesktopCommand,
-  writeDesktopFile,
-  type DesktopRuntime
-} from "./desktop";
+import { API_URL, ApiClientError, api, getSessionToken, saveSessionToken } from "./api";
+import { getDesktopRuntime, hasDesktopRuntime, type DesktopRuntime } from "./desktop";
+import { locales, messages, type Locale } from "./i18n";
 
 type Row = Record<string, unknown>;
-type WorkMode = "agent" | "terminal" | "patch" | "evidence";
-
-interface IdeEntry {
-  name: string;
-  path: string;
-  type: "directory" | "file";
-}
-
-interface IdeFileResponse {
-  path: string;
-  bytes: number;
-  language: string;
-  content: string;
-}
-
-interface IdeTerminalResult {
-  command: string;
-  cwd: string;
-  exitCode: number | null;
-  stdout: string;
-  stderr: string;
-  durationMs: number;
-  truncated: boolean;
-}
+type View = "home" | "signin" | "signup" | "app";
+type AppTab = "missions" | "agents" | "evidence" | "audit" | "desktop";
 
 interface Overview {
   organization?: Row;
@@ -90,22 +52,34 @@ interface Overview {
 
 interface LiveStatus {
   ok: boolean;
-  service: string;
   environment: string;
 }
 
 interface HealthStatus {
   ok: boolean;
-  service: string;
-  environment: string;
   database: string;
   checks: {
     database: boolean;
     rust_core: boolean;
-    default_organization: boolean;
     policy_engine: string;
     sandbox_engine: string;
   };
+}
+
+interface SessionUser {
+  id: string;
+  organization_id: string;
+  email: string;
+  name: string;
+  role: string;
+  language: Locale;
+}
+
+interface SessionPayload {
+  token: string;
+  user: SessionUser;
+  organization?: Row;
+  project?: Row;
 }
 
 interface MissionView {
@@ -115,8 +89,8 @@ interface MissionView {
   status: string;
   riskLevel: string;
   autonomyLevel: number;
-  createdAt?: string;
-  projectId?: string;
+  createdAt: string;
+  projectId: string;
 }
 
 const emptyOverview: Overview = {
@@ -133,537 +107,337 @@ const emptyOverview: Overview = {
   jobs: []
 };
 
-const previewMissions: MissionView[] = [
-  {
-    id: "AOS-RUN-001",
-    title: "Revenue analytics refactor",
-    intent:
-      "Refactor the analytics surface, propose a safe patch, run sandbox checks, capture evidence and prepare approval.",
-    status: "IN_PROGRESS",
-    riskLevel: "medium",
-    autonomyLevel: 4,
-    createdAt: "2026-06-04T10:42:00.000Z",
-    projectId: "com.agentops.os"
+const releaseUrl = "https://github.com/agentops-ai205/agentops/releases/latest";
+
+const productCopy = {
+  en: {
+    start: "Start on web",
+    signin: "Sign in",
+    signup: "Create account",
+    signout: "Sign out",
+    download: "Download desktop IDE",
+    heroTitle: "AgentOps",
+    heroBody:
+      "A real operations workspace for governed AI coding: missions, approvals, evidence, audit, and a desktop IDE when local files and terminal access are required.",
+    webApp: "Use the web app",
+    desktopApp: "Switch to desktop IDE",
+    account: "Account",
+    organization: "Organization",
+    password: "Password",
+    email: "Email",
+    name: "Name",
+    workspaceName: "Workspace name",
+    noMissions: "No missions yet. Create the first real mission in your workspace.",
+    createMission: "Create mission",
+    missionIntent: "Mission intent",
+    dashboard: "Dashboard",
+    agents: "Agents",
+    evidence: "Evidence",
+    audit: "Audit",
+    desktop: "Desktop IDE",
+    liveDatabase: "Live database",
+    connected: "Connected",
+    notReady: "Not ready",
+    newMissionTitle: "Mission title",
+    newMissionIntent: "What should the agents accomplish?",
+    plan: "Plan",
+    runAgent: "Run agent",
+    evaluate: "Evaluate",
+    approve: "Approve",
+    attachEvidence: "Attach evidence",
+    realData: "Real workspace data",
+    emptyState: "This section is empty because no records exist in the database yet.",
+    desktopBody:
+      "The web app manages missions and governance. Download the desktop IDE when you need native filesystem, terminal, and patch workflows.",
+    status: "Status"
   },
-  {
-    id: "AOS-RUN-002",
-    title: "Auth security review",
-    intent:
-      "Inspect authentication changes, detect risk, and require human approval before execution.",
-    status: "WAITING_APPROVAL",
-    riskLevel: "high",
-    autonomyLevel: 3,
-    createdAt: "2026-06-04T09:20:00.000Z",
-    projectId: "com.agentops.os"
+  fr: {
+    start: "Demarrer sur le web",
+    signin: "Connexion",
+    signup: "Creer un compte",
+    signout: "Deconnexion",
+    download: "Telecharger l'IDE desktop",
+    heroTitle: "AgentOps",
+    heroBody:
+      "Un vrai espace d'operations pour coder avec IA sous gouvernance : missions, validations, preuves, audit, et IDE desktop quand il faut acceder aux fichiers locaux et au terminal.",
+    webApp: "Utiliser la web app",
+    desktopApp: "Basculer vers l'IDE desktop",
+    account: "Compte",
+    organization: "Organisation",
+    password: "Mot de passe",
+    email: "Email",
+    name: "Nom",
+    workspaceName: "Nom du workspace",
+    noMissions: "Aucune mission pour l'instant. Cree la premiere vraie mission du workspace.",
+    createMission: "Creer mission",
+    missionIntent: "Objectif de mission",
+    dashboard: "Tableau de bord",
+    agents: "Agents",
+    evidence: "Preuves",
+    audit: "Audit",
+    desktop: "IDE desktop",
+    liveDatabase: "Base de donnees live",
+    connected: "Connecte",
+    notReady: "Pas pret",
+    newMissionTitle: "Titre de mission",
+    newMissionIntent: "Que doivent accomplir les agents ?",
+    plan: "Planifier",
+    runAgent: "Lancer agent",
+    evaluate: "Evaluer",
+    approve: "Approuver",
+    attachEvidence: "Ajouter preuve",
+    realData: "Donnees reelles du workspace",
+    emptyState: "Cette section est vide parce qu'aucun enregistrement n'existe encore en base.",
+    desktopBody:
+      "La web app gere les missions et la gouvernance. Telecharge l'IDE desktop pour les fichiers locaux, le terminal et les patchs.",
+    status: "Statut"
   },
-  {
-    id: "AOS-RUN-003",
-    title: "Database migration gate",
-    intent:
-      "Validate migration scope, verify rollback evidence, and prepare release owner review.",
-    status: "APPROVED",
-    riskLevel: "medium",
-    autonomyLevel: 2,
-    createdAt: "2026-06-03T15:10:00.000Z",
-    projectId: "com.agentops.os"
+  es: {
+    start: "Empezar en web",
+    signin: "Iniciar sesion",
+    signup: "Crear cuenta",
+    signout: "Salir",
+    download: "Descargar IDE desktop",
+    heroTitle: "AgentOps",
+    heroBody:
+      "Un espacio real de operaciones para codigo con IA gobernada: misiones, aprobaciones, evidencia, auditoria e IDE desktop para archivos locales y terminal.",
+    webApp: "Usar la web app",
+    desktopApp: "Cambiar al IDE desktop",
+    account: "Cuenta",
+    organization: "Organizacion",
+    password: "Contrasena",
+    email: "Email",
+    name: "Nombre",
+    workspaceName: "Nombre del workspace",
+    noMissions: "Aun no hay misiones. Crea la primera mision real del workspace.",
+    createMission: "Crear mision",
+    missionIntent: "Objetivo de la mision",
+    dashboard: "Panel",
+    agents: "Agentes",
+    evidence: "Evidencia",
+    audit: "Auditoria",
+    desktop: "IDE desktop",
+    liveDatabase: "Base de datos live",
+    connected: "Conectado",
+    notReady: "No listo",
+    newMissionTitle: "Titulo de mision",
+    newMissionIntent: "Que deben lograr los agentes?",
+    plan: "Planificar",
+    runAgent: "Ejecutar agente",
+    evaluate: "Evaluar",
+    approve: "Aprobar",
+    attachEvidence: "Adjuntar evidencia",
+    realData: "Datos reales del workspace",
+    emptyState: "Esta seccion esta vacia porque aun no hay registros en la base.",
+    desktopBody:
+      "La web app gestiona misiones y gobernanza. Descarga el IDE desktop para archivos locales, terminal y patches.",
+    status: "Estado"
+  },
+  zh: {
+    start: "使用网页版",
+    signin: "登录",
+    signup: "创建账户",
+    signout: "退出",
+    download: "下载桌面 IDE",
+    heroTitle: "AgentOps",
+    heroBody:
+      "真实的 AI 编码治理工作区：任务、审批、证据、审计；需要本地文件和终端时切换到桌面 IDE。",
+    webApp: "使用 Web App",
+    desktopApp: "切换到桌面 IDE",
+    account: "账户",
+    organization: "组织",
+    password: "密码",
+    email: "邮箱",
+    name: "姓名",
+    workspaceName: "工作区名称",
+    noMissions: "还没有任务。创建第一个真实工作区任务。",
+    createMission: "创建任务",
+    missionIntent: "任务目标",
+    dashboard: "仪表盘",
+    agents: "代理",
+    evidence: "证据",
+    audit: "审计",
+    desktop: "桌面 IDE",
+    liveDatabase: "实时数据库",
+    connected: "已连接",
+    notReady: "未就绪",
+    newMissionTitle: "任务标题",
+    newMissionIntent: "代理需要完成什么？",
+    plan: "规划",
+    runAgent: "运行代理",
+    evaluate: "评估",
+    approve: "批准",
+    attachEvidence: "添加证据",
+    realData: "真实工作区数据",
+    emptyState: "此区域为空，因为数据库中还没有记录。",
+    desktopBody:
+      "Web App 管理任务和治理。需要本地文件、终端和补丁工作流时，请下载桌面 IDE。",
+    status: "状态"
   }
-];
-
-const previewEvidence = [
-  { title: "Policy scan", type: "review", hash: "a42f7e819d9a0031", createdAt: "2026-06-04T10:45:00.000Z" },
-  { title: "Sandbox test result", type: "test_result", hash: "c5916fb21108e12c", createdAt: "2026-06-04T10:46:00.000Z" },
-  { title: "Patch proposal", type: "patch", hash: "9e21cf76853cfab0", createdAt: "2026-06-04T10:47:00.000Z" }
-];
-
-const previewJobs = [
-  { id: "job_001", type: "agent.run", status: "succeeded", createdAt: "2026-06-04T10:42:00.000Z" },
-  { id: "job_002", type: "tool.run_command", status: "running", createdAt: "2026-06-04T10:44:00.000Z" },
-  { id: "job_003", type: "evaluation.run", status: "queued", createdAt: "2026-06-04T10:45:00.000Z" },
-  { id: "job_004", type: "patch.apply_guarded", status: "queued", createdAt: "2026-06-04T10:47:00.000Z" }
-];
-
-const previewPatch = {
-  id: "patch_001",
-  title: "Mission service hardening",
-  summary: "Policy-gated patch proposal for the AgentOps mission workflow.",
-  status: "waiting_approval",
-  riskLevel: "medium",
-  policyDecision: "require_review",
-  unifiedDiff: `diff --git a/apps/api/src/services/missionService.ts b/apps/api/src/services/missionService.ts
-@@
--  return transitionMission(mission, "CLOSED", { closedAt: new Date() });
-+  await assertEvidenceAndEvaluation(mission.id);
-+  return transitionMission(mission, "CLOSED", { closedAt: new Date() });
-@@
-+  audit: "hash-chain captured",
-+  approval: "technical_owner required"`
-};
-
-const navItems = [
-  { label: "Dashboard", icon: <Home size={18} /> },
-  { label: "Missions", icon: <BriefcaseBusiness size={18} /> },
-  { label: "Agents", icon: <Bot size={18} /> },
-  { label: "Tools", icon: <Wrench size={18} /> },
-  { label: "Policies", icon: <Shield size={18} /> },
-  { label: "Evidence", icon: <FileCheck2 size={18} /> },
-  { label: "Audit", icon: <History size={18} /> },
-  { label: "Reports", icon: <Gauge size={18} /> }
-];
-
-const workspaceTabs = ["Mission Cockpit", "Desktop IDE", "Agent Runner", "Patch Review", "Sandbox", "Audit Ledger"];
+} satisfies Record<Locale, Record<string, string>>;
 
 export default function App() {
+  const [locale, setLocale] = useState<Locale>(() => readLocale());
+  const copy = productCopy[locale];
+  const baseMessages = messages[locale];
+  const [view, setView] = useState<View>(() => (getSessionToken() ? "app" : "home"));
+  const [activeTab, setActiveTab] = useState<AppTab>("missions");
+  const [session, setSession] = useState<SessionUser | null>(null);
   const [overview, setOverview] = useState<Overview>(emptyOverview);
   const [tools, setTools] = useState<Row[]>([]);
   const [providers, setProviders] = useState<Row[]>([]);
-  const [status, setStatus] = useState("Connecting API...");
   const [liveStatus, setLiveStatus] = useState<LiveStatus | null>(null);
   const [healthStatus, setHealthStatus] = useState<HealthStatus | null>(null);
-  const [lastCheckedAt, setLastCheckedAt] = useState("");
-  const [selectedMissionId, setSelectedMissionId] = useState(previewMissions[0].id);
-  const [missionSearch, setMissionSearch] = useState("");
-  const [operatorToken, setOperatorTokenState] = useState(() => getOperatorToken());
-  const [tokenInput, setTokenInput] = useState("");
-  const [authRequired, setAuthRequired] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [newMissionOpen, setNewMissionOpen] = useState(false);
-  const [missionIntent, setMissionIntent] = useState("");
-  const [newMissionTitle, setNewMissionTitle] = useState("");
-  const [newMissionBody, setNewMissionBody] = useState("");
-  const [workMode, setWorkMode] = useState<WorkMode>("agent");
-  const [agentRole, setAgentRole] = useState("coder");
-  const [agentInstruction, setAgentInstruction] = useState(
-    "Inspect the current mission and return a patch-first next step with evidence requirements."
-  );
-  const [commandInput, setCommandInput] = useState("npm run test");
-  const [patchTitle, setPatchTitle] = useState("Mission cockpit production polish");
-  const [patchPath, setPatchPath] = useState("apps/web/src/App.tsx");
-  const [patchDiff, setPatchDiff] = useState(previewPatch.unifiedDiff);
-  const [evidenceTitle, setEvidenceTitle] = useState("Operator validation note");
-  const [evidenceContent, setEvidenceContent] = useState(
-    "UI, mission workflow, patch review, sandbox jobs and audit evidence reviewed before deployment."
-  );
-  const [controlMessage, setControlMessage] = useState("Control plane ready. Actions are governed by policy.");
-  const [activeWorkspaceTab, setActiveWorkspaceTab] = useState(workspaceTabs[0]);
-  const [ideEntries, setIdeEntries] = useState<IdeEntry[]>([]);
-  const [ideDirectory, setIdeDirectory] = useState("");
-  const [activeFilePath, setActiveFilePath] = useState("apps/web/src/App.tsx");
-  const [activeFileContent, setActiveFileContent] = useState("");
-  const [activeFileLanguage, setActiveFileLanguage] = useState("typescript");
-  const [ideCommand, setIdeCommand] = useState("npm test");
-  const [ideOutput, setIdeOutput] = useState("Local IDE runtime is waiting for a desktop or API connection.");
-  const [ideMessage, setIdeMessage] = useState("Desktop IDE runtime pending.");
   const [desktopRuntime, setDesktopRuntime] = useState<DesktopRuntime | null>(null);
-
-  async function refresh() {
-    const [liveData, healthData] = await Promise.all([
-      api<LiveStatus>("/live").catch(() => null),
-      api<HealthStatus>("/health").catch(() => null)
-    ]);
-    setLiveStatus(liveData);
-    setHealthStatus(healthData);
-    setLastCheckedAt(new Date().toISOString());
-
-    try {
-      const [overviewData, toolData, providerData] = await Promise.all([
-        api<Overview>("/v1/overview"),
-        api<Row[]>("/v1/tools").catch(() => []),
-        api<Row[]>("/v1/model-providers").catch(() => [])
-      ]);
-      setOverview({ ...emptyOverview, ...overviewData });
-      setTools(toolData);
-      setProviders(providerData);
-      setStatus(`Live API: ${API_URL}`);
-      setAuthRequired(false);
-    } catch (error) {
-      if (error instanceof ApiClientError && error.status === 401) {
-        saveOperatorToken("");
-        setOperatorTokenState("");
-        setAuthRequired(true);
-        setStatus(healthData?.ok ? "Operator token required" : "Preview mode - backend pending");
-        return;
-      }
-      setStatus("Preview mode - backend pending");
-    }
-  }
+  const [selectedMissionId, setSelectedMissionId] = useState("");
+  const [missionSearch, setMissionSearch] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const [authForm, setAuthForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    organization: ""
+  });
+  const [missionForm, setMissionForm] = useState({ title: "", intent: "" });
+  const [evidenceForm, setEvidenceForm] = useState({ title: "", content: "" });
 
   useEffect(() => {
-    void refresh();
+    try {
+      localStorage.setItem("agentops.locale", locale);
+    } catch {
+      // Local storage can be unavailable in strict browser contexts.
+    }
+  }, [locale]);
+
+  useEffect(() => {
+    void refreshStatus();
+    void restoreSession();
+    if (!hasDesktopRuntime()) return;
+    getDesktopRuntime().then(setDesktopRuntime).catch(() => setDesktopRuntime(null));
   }, []);
 
-  const liveReady = status.startsWith("Live API");
-  const desktopReady = Boolean(desktopRuntime);
-  const ideRuntimeReady = desktopReady || liveReady;
-  const apiReachable = Boolean(liveStatus?.ok);
-  const databaseReady = healthStatus?.checks.database === true;
-  const operatorUnlocked = liveReady && Boolean(operatorToken);
-  const policyEngine = healthStatus?.checks.policy_engine || "unknown";
-  const sandboxEngine = healthStatus?.checks.sandbox_engine || "unknown";
-  const desktopIdeActive = activeWorkspaceTab === "Desktop IDE";
-  const missions = overview.missions.length ? overview.missions.map(toMissionView) : previewMissions;
+  const databaseReady = healthStatus?.checks?.database === true;
+  const missions = useMemo(() => overview.missions.map(toMissionView), [overview.missions]);
   const filteredMissions = useMemo(() => {
     const query = missionSearch.trim().toLowerCase();
     if (!query) return missions;
     return missions.filter((mission) =>
-      [mission.id, mission.title, mission.intent, mission.status, mission.riskLevel]
-        .join(" ")
-        .toLowerCase()
-        .includes(query)
+      [mission.id, mission.title, mission.intent, mission.status, mission.riskLevel].join(" ").toLowerCase().includes(query)
     );
   }, [missionSearch, missions]);
-
-  const activeMission = useMemo(
-    () => missions.find((mission) => mission.id === selectedMissionId) ?? missions[0] ?? previewMissions[0],
-    [missions, selectedMissionId]
-  );
-
-  const projectId = asText(overview.project?.id) || activeMission.projectId;
-  const missionJobs = liveReady
+  const activeMission = missions.find((mission) => mission.id === selectedMissionId) ?? missions[0];
+  const projectId = asText(overview.project?.id);
+  const activeMissionJobs = activeMission
     ? overview.jobs.filter((job) => asText(job.missionId) === activeMission.id)
-    : previewJobs;
-  const missionEvidence = liveReady
-    ? overview.evidence.filter((item) => asText(item.missionId) === activeMission.id)
-    : previewEvidence;
-  const missionApprovals = liveReady
-    ? overview.approvals.filter((item) => asText(item.missionId) === activeMission.id)
     : [];
-  const missionAudit = liveReady
+  const activeMissionEvidence = activeMission
+    ? overview.evidence.filter((item) => asText(item.missionId) === activeMission.id)
+    : [];
+  const activeMissionAudit = activeMission
     ? overview.audit.filter((item) => asText(item.missionId) === activeMission.id)
     : [];
-  const missionPatches = liveReady
-    ? overview.patches.filter((item) => asText(item.missionId) === activeMission.id)
-    : [previewPatch];
-  const selectedPatch = missionPatches[0] ?? previewPatch;
-  const policies = overview.policies.length ? overview.policies : previewPolicyRows();
-  const blockers = policies.filter((policy) => asText(policy.decision) === "deny").length;
-  const pendingApprovals = overview.missions.filter((mission) => asText(mission.status) === "WAITING_APPROVAL").length;
-  const succeededJobs = overview.jobs.filter((job) => asText(job.status) === "succeeded").length;
-  const throughput = overview.jobs.length ? Math.round((succeededJobs / overview.jobs.length) * 100) : 92;
-  const riskScore = riskScoreFor(activeMission.riskLevel, blockers);
 
-  useEffect(() => {
-    if (!hasDesktopRuntime()) return;
-    getDesktopRuntime()
-      .then((runtime) => {
-        setDesktopRuntime(runtime);
-        setIdeDirectory("");
-        setIdeMessage(`Desktop runtime ready on ${runtime.platform}.`);
-        setIdeOutput("Native desktop runtime connected. Commands are allowlisted and project-scoped.");
-      })
-      .catch((error) => {
-        setIdeMessage(error instanceof Error ? error.message : "Desktop runtime unavailable.");
+  async function refreshStatus() {
+    const [live, health] = await Promise.all([
+      api<LiveStatus>("/live").catch(() => null),
+      api<HealthStatus>("/health").catch(() => null)
+    ]);
+    setLiveStatus(live);
+    setHealthStatus(health);
+  }
+
+  async function restoreSession() {
+    const token = getSessionToken();
+    if (!token) return;
+    try {
+      const payload = await api<{ user: SessionUser }>("/v1/auth/me");
+      setSession(payload.user);
+      setLocale(payload.user.language);
+      setView("app");
+      await loadWorkspace();
+    } catch {
+      saveSessionToken("");
+      setSession(null);
+      setView("home");
+    }
+  }
+
+  async function loadWorkspace() {
+    const [overviewData, toolData, providerData] = await Promise.all([
+      api<Overview>("/v1/overview"),
+      api<Row[]>("/v1/tools").catch(() => []),
+      api<Row[]>("/v1/model-providers").catch(() => [])
+    ]);
+    setOverview({ ...emptyOverview, ...overviewData });
+    setTools(toolData);
+    setProviders(providerData);
+    const firstMissionId = asText(overviewData.missions[0]?.id);
+    if (firstMissionId) setSelectedMissionId((current) => current || firstMissionId);
+  }
+
+  async function authenticate(path: "/v1/auth/signup" | "/v1/auth/login", event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setBusy(true);
+    setMessage("");
+    try {
+      const payload = await api<SessionPayload>(path, {
+        method: "POST",
+        body: JSON.stringify(
+          path === "/v1/auth/signup"
+            ? {
+                name: authForm.name,
+                email: authForm.email,
+                password: authForm.password,
+                organization_name: authForm.organization,
+                language: locale
+              }
+            : {
+                email: authForm.email,
+                password: authForm.password
+              }
+        )
       });
-  }, []);
-
-  useEffect(() => {
-    if (ideRuntimeReady) {
-      void refreshIde("");
-      void openIdeFile(activeFilePath);
-    }
-  }, [ideRuntimeReady]);
-
-  async function runControlAction(action: () => Promise<unknown>, success: string) {
-    if (!liveReady) {
-      setControlMessage("Backend is not connected. Preview mode keeps governed actions locked.");
-      return;
-    }
-
-    setBusy(true);
-    setControlMessage("Running governed action...");
-    try {
-      await action();
-      setControlMessage(success);
-      await refresh();
+      saveSessionToken(payload.token);
+      setSession(payload.user);
+      setLocale(payload.user.language);
+      setView("app");
+      await loadWorkspace();
     } catch (error) {
-      setControlMessage(error instanceof Error ? error.message : "Action failed.");
+      setMessage(error instanceof Error ? error.message : "Authentication failed.");
     } finally {
       setBusy(false);
     }
   }
 
-  function planMission() {
-    void runControlAction(
-      () => api(`/v1/missions/${activeMission.id}/plan`, { method: "POST" }),
-      "Mission plan generated and audit record captured."
-    );
-  }
-
-  function runAgent() {
-    void runControlAction(
-      () =>
-        api(`/v1/missions/${activeMission.id}/agents/run`, {
-          method: "POST",
-          body: JSON.stringify({
-            role: agentRole,
-            requested_by: "human.operator",
-            max_tokens: 1200,
-            context: {
-              instruction: agentInstruction,
-              mission_id: activeMission.id,
-              interface: "agentops_v3_cockpit"
-            }
-          })
-        }),
-      `${agentRole} agent job queued under policy control.`
-    );
-  }
-
-  function queueCommand() {
-    void runControlAction(
-      () =>
-        api(`/v1/missions/${activeMission.id}/execute`, {
-          method: "POST",
-          body: JSON.stringify({
-            command: commandInput,
-            agent_id: "agent.tester"
-          })
-        }),
-      "Sandbox command queued after policy evaluation."
-    );
-  }
-
-  function runEvaluation() {
-    void runControlAction(
-      () => api(`/v1/missions/${activeMission.id}/evaluate`, { method: "POST" }),
-      "Mission evaluation job queued."
-    );
-  }
-
-  function approveMission(decision: "approved" | "rejected", reason: string, scope: string[]) {
-    void runControlAction(
-      () =>
-        api(`/v1/missions/${activeMission.id}/approve`, {
-          method: "POST",
-          body: JSON.stringify({
-            approver: "human.operator",
-            role: "technical_owner",
-            decision,
-            scope,
-            reason
-          })
-        }),
-      decision === "approved" ? "Human approval recorded." : "Human rejection recorded."
-    );
-  }
-
-  function proposePatch() {
-    void runControlAction(
-      () =>
-        api(`/v1/missions/${activeMission.id}/patches/propose`, {
-          method: "POST",
-          body: JSON.stringify({
-            title: patchTitle,
-            summary: `Cockpit proposal for ${patchPath}`,
-            files: [{ path: patchPath, change_type: "modify" }],
-            unified_diff: patchDiff,
-            risk_level: "medium",
-            generated_by: "agent.coder",
-            agent_role: "coder"
-          })
-        }),
-      "Patch proposal created with policy findings and evidence hash."
-    );
-  }
-
-  function applyPatchGuarded() {
-    const patchId = asText(selectedPatch.id);
-    if (!patchId) return;
-    void runControlAction(
-      () =>
-        api(`/v1/patches/${patchId}/apply`, {
-          method: "POST",
-          body: JSON.stringify({
-            actor_id: "human.operator",
-            role: "technical_owner",
-            agent_role: "reviewer",
-            reason: "Guarded patch application requested from AgentOps cockpit."
-          })
-        }),
-      "Patch marked ready for guarded application."
-    );
-  }
-
-  function attachEvidence() {
-    void runControlAction(
-      () =>
-        api("/v1/evidence", {
-          method: "POST",
-          body: JSON.stringify({
-            mission_id: activeMission.id,
-            type: "report",
-            title: evidenceTitle,
-            content: evidenceContent,
-            metadata: { source: "agentops_v3_cockpit" },
-            created_by: "human.operator"
-          })
-        }),
-      "Evidence attached and hashed."
-    );
-  }
-
-  function bootstrapControlPlane() {
-    void runControlAction(
-      () => api("/v1/bootstrap", { method: "POST" }),
-      "Bootstrap completed and production seed data verified."
-    );
-  }
-
-  function clearOperatorToken() {
-    saveOperatorToken("");
-    setOperatorTokenState("");
-    setAuthRequired(true);
-    setStatus(apiReachable ? "Operator token required" : "Preview mode - backend pending");
-  }
-
-  async function refreshIde(directory = ideDirectory) {
-    if (!ideRuntimeReady) {
-      setIdeMessage("Open the desktop app or connect the local API before using the IDE runtime.");
-      return;
-    }
-    try {
-      const data = desktopReady
-        ? await listDesktopFiles(directory)
-        : await api<{ entries: IdeEntry[]; path: string }>(`/v1/ide/files?path=${encodeURIComponent(directory)}`);
-      setIdeEntries(data.entries);
-      setIdeDirectory(data.path);
-      setIdeMessage(data.path ? `Browsing ${data.path}` : "Browsing project root");
-    } catch (error) {
-      setIdeMessage(error instanceof Error ? error.message : "Unable to load workspace files.");
-    }
-  }
-
-  async function openIdeFile(path: string) {
-    if (!ideRuntimeReady || !path) return;
-    try {
-      const file = desktopReady ? await readDesktopFile(path) : await api<IdeFileResponse>(`/v1/ide/file?path=${encodeURIComponent(path)}`);
-      setActiveFilePath(file.path);
-      setActiveFileLanguage(file.language);
-      setActiveFileContent(file.content);
-      setIdeMessage(`Opened ${file.path} (${file.bytes} bytes)`);
-    } catch (error) {
-      setIdeMessage(error instanceof Error ? error.message : "Unable to open file.");
-    }
-  }
-
-  async function saveIdeFile() {
-    if (!ideRuntimeReady || !activeFilePath) return;
+  async function logout() {
     setBusy(true);
     try {
-      if (desktopReady) {
-        await writeDesktopFile(activeFilePath, activeFileContent);
-        setIdeMessage(`Saved ${activeFilePath} in the desktop workspace.`);
-      } else {
-        await api("/v1/ide/file", {
-          method: "PUT",
-          body: JSON.stringify({
-            path: activeFilePath,
-            content: activeFileContent,
-            mission_id: activeMission.id,
-            actor_id: "human.operator"
-          })
-        });
-        setIdeMessage(`Saved ${activeFilePath} and attached evidence.`);
-        await refresh();
-      }
-    } catch (error) {
-      setIdeMessage(error instanceof Error ? error.message : "Unable to save file.");
+      await api("/v1/auth/logout", { method: "POST" }).catch(() => undefined);
     } finally {
+      saveSessionToken("");
+      setSession(null);
+      setOverview(emptyOverview);
+      setSelectedMissionId("");
+      setView("home");
       setBusy(false);
     }
   }
 
-  async function runIdeCommand() {
-    if (!ideRuntimeReady || !ideCommand.trim()) return;
+  async function createMission(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!projectId || !missionForm.title.trim() || !missionForm.intent.trim()) return;
     setBusy(true);
-    setIdeOutput(`$ ${ideCommand}\nRunning...`);
-    try {
-      const result = desktopReady
-        ? await runDesktopCommand(ideCommand, ideDirectory)
-        : await api<IdeTerminalResult>("/v1/ide/terminal/run", {
-            method: "POST",
-            body: JSON.stringify({
-              command: ideCommand,
-              cwd: "",
-              mission_id: activeMission.id,
-              actor_id: "human.operator"
-            })
-          });
-      setIdeOutput(formatTerminalResult(result));
-      setIdeMessage(
-        result.exitCode === 0
-          ? desktopReady
-            ? "Command completed inside the desktop workspace."
-            : "Command completed and evidence captured."
-          : desktopReady
-            ? "Command failed inside the desktop workspace."
-            : "Command failed and evidence captured."
-      );
-      if (!desktopReady) await refresh();
-    } catch (error) {
-      setIdeOutput(error instanceof Error ? error.message : "Command failed.");
-      setIdeMessage("Terminal execution failed.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function applyIdePatch() {
-    if (!ideRuntimeReady || !patchDiff.trim()) return;
-    setBusy(true);
-    try {
-      if (desktopReady) {
-        const result = await applyDesktopPatch(patchDiff);
-        setIdeOutput(formatTerminalResult(result));
-        setIdeMessage(result.exitCode === 0 ? "Patch applied inside the desktop workspace." : "Patch apply failed in desktop workspace.");
-      } else {
-        const result = await api<{ applied: boolean; stdout: string; stderr: string; exitCode: number | null }>(
-          "/v1/ide/patch/apply",
-          {
-            method: "POST",
-            body: JSON.stringify({
-              unified_diff: patchDiff,
-              mission_id: activeMission.id,
-              actor_id: "human.operator",
-              confirmed: true
-            })
-          }
-        );
-        setIdeOutput(`${result.applied ? "Patch applied" : "Patch failed"}\n${result.stdout}\n${result.stderr}`.trim());
-        setIdeMessage(result.applied ? "Patch applied locally and evidence captured." : "Patch apply failed; evidence captured.");
-        await refresh();
-      }
-      if (activeFilePath) await openIdeFile(activeFilePath);
-    } catch (error) {
-      setIdeMessage(error instanceof Error ? error.message : "Unable to apply patch.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function createMission(event?: FormEvent<HTMLFormElement>) {
-    event?.preventDefault();
-    const title = (newMissionTitle || titleFromIntent(missionIntent)).trim();
-    const intent = (newMissionBody || missionIntent).trim();
-
-    if (!liveReady || !projectId) {
-      setControlMessage("Connect the backend before creating a mission.");
-      return;
-    }
-    if (!title || !intent) {
-      setControlMessage("Mission title and intent are required.");
-      return;
-    }
-
-    setBusy(true);
+    setMessage("");
     try {
       const mission = await api<Row>(`/v1/projects/${projectId}/missions`, {
         method: "POST",
         body: JSON.stringify({
-          title,
-          intent,
-          success_criteria: ["Policy passes", "Evidence is captured", "Human approval is recorded"],
+          title: missionForm.title,
+          intent: missionForm.intent,
+          success_criteria: ["Mission plan recorded", "Evidence captured", "Human approval available"],
           risk_level: "medium",
-          autonomy_level: 4,
+          autonomy_level: 3,
           human_approval: {
             before_execution: true,
             before_merge: true,
@@ -671,666 +445,517 @@ export default function App() {
           }
         })
       });
+      setMissionForm({ title: "", intent: "" });
       setSelectedMissionId(asText(mission.id));
-      setMissionIntent("");
-      setNewMissionTitle("");
-      setNewMissionBody("");
-      setNewMissionOpen(false);
-      setControlMessage("Mission created in the control plane.");
-      await refresh();
+      await loadWorkspace();
+      setMessage("Mission created in the database.");
     } catch (error) {
-      setControlMessage(error instanceof Error ? error.message : "Mission creation failed.");
+      setMessage(error instanceof Error ? error.message : "Mission creation failed.");
     } finally {
       setBusy(false);
     }
   }
 
-  function submitOperatorToken(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const token = tokenInput.trim();
-    if (!token) return;
-    saveOperatorToken(token);
-    setOperatorTokenState(token);
-    setTokenInput("");
-    setAuthRequired(false);
-    void refresh();
+  async function runMissionAction(action: "plan" | "agent" | "evaluate" | "approve" | "evidence") {
+    if (!activeMission) return;
+    setBusy(true);
+    setMessage("");
+    try {
+      if (action === "plan") {
+        await api(`/v1/missions/${activeMission.id}/plan`, { method: "POST" });
+      }
+      if (action === "agent") {
+        await api(`/v1/missions/${activeMission.id}/agents/run`, {
+          method: "POST",
+          body: JSON.stringify({
+            role: "coder",
+            requested_by: session?.id ?? "human.operator",
+            context: { mission_id: activeMission.id }
+          })
+        });
+      }
+      if (action === "evaluate") {
+        await api(`/v1/missions/${activeMission.id}/evaluate`, { method: "POST" });
+      }
+      if (action === "approve") {
+        await api(`/v1/missions/${activeMission.id}/approve`, {
+          method: "POST",
+          body: JSON.stringify({
+            approver: session?.email ?? "human.operator",
+            role: "owner",
+            decision: "approved",
+            scope: ["execution", "patch", "evaluation"],
+            reason: "Approved from the AgentOps web app."
+          })
+        });
+      }
+      if (action === "evidence") {
+        await api("/v1/evidence", {
+          method: "POST",
+          body: JSON.stringify({
+            mission_id: activeMission.id,
+            type: "report",
+            title: evidenceForm.title || "Operator note",
+            content: evidenceForm.content || "Evidence captured from the AgentOps web app.",
+            metadata: { source: "web_app" },
+            created_by: session?.email ?? "human.operator"
+          })
+        });
+        setEvidenceForm({ title: "", content: "" });
+      }
+      await loadWorkspace();
+      setMessage("Action recorded in the database.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Action failed.");
+    } finally {
+      setBusy(false);
+    }
   }
 
-  return (
-    <main className="appShell">
-      <aside className="sidebar">
-        <div className="brandBlock">
-          <div className="brandMark">A</div>
-          <button className="brandButton" type="button">
-            <strong>AgentOps</strong>
-            <ChevronDown size={15} />
-          </button>
-        </div>
-
-        <button className="newMissionButton" type="button" onClick={() => setNewMissionOpen(true)}>
-          <Plus size={18} />
-          New Mission
-        </button>
-
-        <nav className="mainNav" aria-label="Main navigation">
-          {navItems.map((item, index) => (
-            <button className={index === 0 ? "active" : ""} key={item.label} type="button">
-              {item.icon}
-              {item.label}
-            </button>
-          ))}
-        </nav>
-
-        <section className="sideSection">
-          <span>Reports</span>
-          {["Revenue Analytics", "Auth Security Review", "Database Migration", "Release Gate"].map((item) => (
-            <button key={item} type="button">
-              <CircleDot size={15} />
-              {item}
-            </button>
-          ))}
-        </section>
-
-        <div className="workspaceUser">
-          <UserCircle2 size={34} />
-          <div>
-            <strong>Alex Morgan</strong>
-            <span>{desktopReady ? "Desktop IDE online" : liveReady ? "Operator online" : "Preview workspace"}</span>
-          </div>
-        </div>
-      </aside>
-
-      <section className="mainSurface">
-        <header className="topbar">
-          <div className="workspaceTabs">
-            {workspaceTabs.map((tab) => (
-              <button
-                className={activeWorkspaceTab === tab ? "active" : ""}
-                key={tab}
-                type="button"
-                onClick={() => setActiveWorkspaceTab(tab)}
-              >
-                {tabIcon(tab)}
-                {tab}
-              </button>
-            ))}
-          </div>
-          <div className="systemStatus">
-            <span className={liveReady || desktopReady ? "statusDot live" : "statusDot"} />
-            <strong>{liveReady ? "All systems governed" : desktopReady ? "Desktop runtime" : "Preview mode"}</strong>
-            <button title="Refresh" type="button" onClick={() => void refresh()}>
-              <Activity size={17} />
-            </button>
-            <div className="operatorAvatar">AM</div>
-          </div>
-        </header>
-
-        {authRequired && !operatorToken && (
-          <form className="authStrip" onSubmit={submitOperatorToken}>
-            <KeyRound size={18} />
-            <input
-              autoFocus
-              placeholder="Operator token"
-              type="password"
-              value={tokenInput}
-              onChange={(event) => setTokenInput(event.target.value)}
-            />
-            <button disabled={!tokenInput.trim()} type="submit">
-              Unlock
-            </button>
-          </form>
-        )}
-
-        <section className="productionStrip" aria-label="Production control">
-          <ProductionStat
-            icon={<Activity size={17} />}
-            label="API"
-            tone={apiReachable ? "green" : "amber"}
-            value={apiReachable ? healthStatus?.environment || liveStatus?.environment || "live" : "offline"}
-          />
-          <ProductionStat
-            icon={<BadgeCheck size={17} />}
-            label="Database"
-            tone={databaseReady ? "green" : "amber"}
-            value={databaseReady ? healthStatus?.database || "postgresql" : "pending"}
-          />
-          <ProductionStat
-            icon={<KeyRound size={17} />}
-            label="Operator"
-            tone={operatorUnlocked ? "green" : "amber"}
-            value={operatorUnlocked ? "unlocked" : authRequired ? "locked" : "checking"}
-          />
-          <ProductionStat
-            icon={<ShieldCheck size={17} />}
-            label="Engines"
-            tone={healthStatus?.ok ? "green" : "amber"}
-            value={`${policyEngine} / ${sandboxEngine}`}
-          />
-          <ProductionStat
-            icon={<Clock3 size={17} />}
-            label="Last check"
-            tone={apiReachable ? "green" : "amber"}
-            value={formatDateTime(lastCheckedAt)}
-          />
-          <div className="productionActions">
-            <button disabled={busy} title="Refresh status" type="button" onClick={() => void refresh()}>
-              <Activity size={16} />
-              Check
-            </button>
-            <button disabled={busy || !operatorUnlocked} title="Bootstrap control plane" type="button" onClick={bootstrapControlPlane}>
-              <BadgeCheck size={16} />
-              Bootstrap
-            </button>
-            {operatorToken && (
-              <button title="Lock operator session" type="button" onClick={clearOperatorToken}>
+  function renderHome() {
+    return (
+      <main className="publicShell">
+        <AppHeader
+          copy={copy}
+          locale={locale}
+          setLocale={setLocale}
+          right={
+            <>
+              <button type="button" onClick={() => setView("signin")}>
                 <KeyRound size={16} />
-                Lock
+                {copy.signin}
               </button>
-            )}
+              <button className="primaryButton" type="button" onClick={() => setView("signup")}>
+                <UserPlus size={16} />
+                {copy.signup}
+              </button>
+            </>
+          }
+        />
+        <section className="heroBand">
+          <div className="heroCopy">
+            <span>{baseMessages.brandSubtitle}</span>
+            <h1>{copy.heroTitle}</h1>
+            <p>{copy.heroBody}</p>
+            <div className="heroActions">
+              <button className="primaryButton" type="button" onClick={() => setView("signup")}>
+                {copy.webApp}
+                <ArrowRight size={17} />
+              </button>
+              <a className="buttonLike" href={releaseUrl} rel="noreferrer" target="_blank">
+                <Download size={17} />
+                {copy.desktopApp}
+              </a>
+            </div>
           </div>
+          <ProductPreview copy={copy} />
         </section>
-
-        <section className={desktopIdeActive ? "cockpitGrid hiddenSurface" : "cockpitGrid"}>
-          <section className="missionPanel">
-            <div className="panelHeader">
-              <div>
-                <span>Mission cockpit</span>
-                <h1>Good morning, Alex</h1>
-                <p>What should the agents accomplish today?</p>
-              </div>
-              <Badge value={liveReady ? "API live" : "Preview"} />
-            </div>
-
-            <label className="searchBox">
-              <Search size={17} />
-              <input
-                placeholder="Search missions..."
-                value={missionSearch}
-                onChange={(event) => setMissionSearch(event.target.value)}
-              />
-            </label>
-
-            <div className="missionList">
-              {filteredMissions.slice(0, 5).map((mission) => (
-                <button
-                  className={mission.id === activeMission.id ? "missionItem active" : "missionItem"}
-                  key={mission.id}
-                  type="button"
-                  onClick={() => setSelectedMissionId(mission.id)}
-                >
-                  <span>{statusIcon(mission.status)}</span>
-                  <div>
-                    <strong>{mission.title}</strong>
-                    <small>{mission.intent}</small>
-                  </div>
-                  <Badge value={mission.status} />
-                </button>
-              ))}
-            </div>
-
-            <div className="agentActions">
-              <ActionButton icon={<Sparkles size={18} />} title="Architect" detail="Analyze impact" onClick={planMission} />
-              <ActionButton icon={<Code2 size={18} />} title="Coder" detail="Propose patch" onClick={() => setWorkMode("patch")} />
-              <ActionButton icon={<TerminalSquare size={18} />} title="Tester" detail="Run sandbox" onClick={() => setWorkMode("terminal")} />
-              <ActionButton icon={<ShieldCheck size={18} />} title="Security" detail="Review risk" onClick={runEvaluation} />
-            </div>
-
-            <form className="missionComposer" onSubmit={createMission}>
-              <textarea
-                placeholder="Describe mission intent..."
-                value={missionIntent}
-                onChange={(event) => setMissionIntent(event.target.value)}
-              />
-              <div>
-                <button title="Add context" type="button">
-                  <Plus size={18} />
-                </button>
-                <button title="Tools" type="button">
-                  <SlidersHorizontal size={18} />
-                </button>
-                <button title="Voice note" type="button">
-                  <Mic size={18} />
-                </button>
-                <button className="sendButton" disabled={busy || !missionIntent.trim() || !liveReady} type="submit">
-                  <Send size={18} />
-                </button>
-              </div>
-            </form>
-          </section>
-
-          <section className="patchPanel">
-            <div className="panelHeader compact">
-              <div>
-                <span>Patch Review</span>
-                <h2>{asText(selectedPatch.title) || patchTitle}</h2>
-                <p>{asText(selectedPatch.summary) || "Patch-first output before any guarded mutation."}</p>
-              </div>
-              <Badge value={asText(selectedPatch.policyDecision) || "policy checked"} />
-            </div>
-
-            <div className="repoBar">
-              <Code2 size={16} />
-              <strong>agentops-os / {activeMission.id}</strong>
-              <span>{asText(selectedPatch.status) || "proposed"}</span>
-            </div>
-
-            <div className="workTabs">
-              {(["agent", "terminal", "patch", "evidence"] as WorkMode[]).map((mode) => (
-                <button className={workMode === mode ? "active" : ""} key={mode} type="button" onClick={() => setWorkMode(mode)}>
-                  {modeIcon(mode)}
-                  {modeLabel(mode)}
-                </button>
-              ))}
-            </div>
-
-            <div className="workSurface">
-              {workMode === "agent" && (
-                <section className="agentRunForm">
-                  <div className="fieldGrid">
-                    <label>
-                      <span>Role</span>
-                      <select value={agentRole} onChange={(event) => setAgentRole(event.target.value)}>
-                        <option value="planner">planner</option>
-                        <option value="architect">architect</option>
-                        <option value="coder">coder</option>
-                        <option value="tester">tester</option>
-                        <option value="security">security</option>
-                        <option value="reviewer">reviewer</option>
-                        <option value="documenter">documenter</option>
-                        <option value="release">release</option>
-                      </select>
-                    </label>
-                    <MetricTile label="Providers" value={providers.length || 4} />
-                  </div>
-                  <label>
-                    <span>Instruction</span>
-                    <textarea value={agentInstruction} onChange={(event) => setAgentInstruction(event.target.value)} />
-                  </label>
-                  <div className="buttonRow">
-                    <button disabled={busy || !liveReady} type="button" onClick={planMission}>
-                      <ListChecks size={16} />
-                      Plan
-                    </button>
-                    <button disabled={busy || !liveReady} type="button" onClick={runAgent}>
-                      <Bot size={16} />
-                      Run agent
-                    </button>
-                    <button disabled={busy || !liveReady} type="button" onClick={runEvaluation}>
-                      <BadgeCheck size={16} />
-                      Evaluate
-                    </button>
-                  </div>
-                </section>
-              )}
-
-              {workMode === "terminal" && (
-                <section className="terminalForm">
-                  <label>
-                    <span>Sandbox command</span>
-                    <input value={commandInput} onChange={(event) => setCommandInput(event.target.value)} />
-                  </label>
-                  <pre>{`$ ${commandInput}
-policy: ${liveReady ? "evaluated before enqueue" : "locked in preview"}
-sandbox: rust_core
-output: evidence hash captured after execution`}</pre>
-                  <div className="buttonRow">
-                    <button disabled={busy || !liveReady || !commandInput.trim()} type="button" onClick={queueCommand}>
-                      <TerminalSquare size={16} />
-                      Queue command
-                    </button>
-                  </div>
-                </section>
-              )}
-
-              {workMode === "patch" && (
-                <section className="patchForm">
-                  <div className="fieldGrid">
-                    <label>
-                      <span>Patch title</span>
-                      <input value={patchTitle} onChange={(event) => setPatchTitle(event.target.value)} />
-                    </label>
-                    <label>
-                      <span>File path</span>
-                      <input value={patchPath} onChange={(event) => setPatchPath(event.target.value)} />
-                    </label>
-                  </div>
-                  <label>
-                    <span>Unified diff</span>
-                    <textarea className="diffInput" value={patchDiff} onChange={(event) => setPatchDiff(event.target.value)} />
-                  </label>
-                  <div className="buttonRow">
-                    <button disabled={busy || !liveReady || !patchTitle.trim() || !patchPath.trim() || !patchDiff.trim()} type="button" onClick={proposePatch}>
-                      <FileDiff size={16} />
-                      Propose patch
-                    </button>
-                    <button disabled={busy || !liveReady || !asText(selectedPatch.id)} type="button" onClick={applyPatchGuarded}>
-                      <Hammer size={16} />
-                      Mark ready
-                    </button>
-                  </div>
-                </section>
-              )}
-
-              {workMode === "evidence" && (
-                <section className="evidenceForm">
-                  <label>
-                    <span>Evidence title</span>
-                    <input value={evidenceTitle} onChange={(event) => setEvidenceTitle(event.target.value)} />
-                  </label>
-                  <label>
-                    <span>Evidence content</span>
-                    <textarea value={evidenceContent} onChange={(event) => setEvidenceContent(event.target.value)} />
-                  </label>
-                  <div className="buttonRow">
-                    <button disabled={busy || !liveReady || !evidenceTitle.trim() || !evidenceContent.trim()} type="button" onClick={attachEvidence}>
-                      <FileCheck2 size={16} />
-                      Attach evidence
-                    </button>
-                  </div>
-                </section>
-              )}
-            </div>
-
-            <div className="terminalOutput">
-              <span>Control output</span>
-              <strong>{controlMessage}</strong>
-              <small>{liveReady ? API_URL : "Preview data active"}</small>
-            </div>
-          </section>
-
-          <section className="dashboardPanel">
-            <div className="browserChrome">
-              <span />
-              <span />
-              <span />
-              <strong>Operational Dashboard</strong>
-              <button type="button">Live</button>
-            </div>
-
-            <div className="metricsGrid">
-              <MetricTile label="Active Missions" value={overview.missions.length || missions.length} trend="+12%" />
-              <MetricTile label="Approval Queue" value={pendingApprovals || missionApprovals.length || 1} trend="human gated" tone="amber" />
-              <MetricTile label="Governed Tools" value={tools.length || 6} trend="registered" />
-              <MetricTile label="Risk Score" value={`${riskScore}%`} trend={blockers ? "blocked" : "reviewable"} tone={riskScore > 70 ? "amber" : "green"} />
-            </div>
-
-            <section className="chartPanel">
-              <div>
-                <span>Mission throughput</span>
-                <strong>{throughput}% succeeded</strong>
-              </div>
-              <ThroughputChart />
-            </section>
-
-            <section className="jobsPanel">
-              <div className="sectionHeader">
-                <div>
-                  <span>Sandbox Jobs</span>
-                  <strong>{missionJobs.length} tracked</strong>
-                </div>
-                <button title="Pause jobs" type="button">
-                  <Pause size={16} />
-                  Pause
-                </button>
-              </div>
-              <div className="jobList">
-                {missionJobs.slice(0, 6).map((job, index) => (
-                  <div className="jobRow" key={asText(job.id) || index}>
-                    {jobIcon(asText(job.type))}
-                    <div>
-                      <strong>{asText(job.type) || "agent.run"}</strong>
-                      <span>{formatTime(asText(job.createdAt))}</span>
-                    </div>
-                    <Badge value={asText(job.status) || "queued"} />
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className="approvalPanel">
-              <div className="sectionHeader">
-                <div>
-                  <span>Human gate</span>
-                  <strong>{activeMission.status}</strong>
-                </div>
-                <Badge value={`${activeMission.autonomyLevel} autonomy`} />
-              </div>
-              <div className="approvalActions">
-                <button disabled={busy || !liveReady} type="button" onClick={() => approveMission("approved", "Operator approved controlled execution.", ["execution", "patch", "evaluation"])}>
-                  <ShieldCheck size={16} />
-                  Approve
-                </button>
-                <button disabled={busy || !liveReady} type="button" onClick={() => approveMission("rejected", "Changes requested before execution.", ["revision_required"])}>
-                  <AlertTriangle size={16} />
-                  Request changes
-                </button>
-                <button disabled={busy || !liveReady} type="button" onClick={() => approveMission("rejected", "Mission rejected by human operator.", ["execution", "patch", "deployment"])}>
-                  <X size={16} />
-                  Reject
-                </button>
-              </div>
-            </section>
-
-            <section className="evidencePanel">
-              <div className="sectionHeader">
-                <div>
-                  <span>Evidence & audit</span>
-                  <strong>{missionEvidence.length} evidence records</strong>
-                </div>
-                <Badge value={`${missionAudit.length || 4} audit`} />
-              </div>
-              <div className="evidenceList">
-                {missionEvidence.slice(0, 4).map((item, index) => (
-                  <div className="evidenceRow" key={`${asText(item.title)}-${index}`}>
-                    <FileCheck2 size={17} />
-                    <div>
-                      <strong>{asText(item.title) || "Evidence"}</strong>
-                      <span>
-                        {asText(item.type) || "report"} - {shortHash(asText(item.hash))}
-                      </span>
-                    </div>
-                    <time>{formatTime(asText(item.createdAt))}</time>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </section>
+        <section className="publicFeatureGrid">
+          <Feature icon={<BriefcaseBusiness size={20} />} title={baseMessages.missions} text="Persistent work records, not screenshots." />
+          <Feature icon={<ShieldCheck size={20} />} title={baseMessages.policies} text="Approval gates before risky actions." />
+          <Feature icon={<FileCheck2 size={20} />} title={baseMessages.evidence} text="Hash-backed evidence for each mission." />
+          <Feature icon={<Download size={20} />} title={copy.desktop} text="Native IDE for files, terminal, and patches." />
         </section>
+      </main>
+    );
+  }
 
-        {desktopIdeActive && (
-          <section className="ideGrid">
-            <section className="ideExplorer">
-              <div className="sectionHeader">
-                <div>
-                  <span>Workspace</span>
-                  <strong>{ideDirectory || "Project root"}</strong>
-                </div>
-                <button disabled={!ideRuntimeReady} title="Refresh files" type="button" onClick={() => void refreshIde()}>
-                  <Activity size={16} />
-                </button>
-              </div>
-              {ideDirectory && (
-                <button className="fileRow directory" type="button" onClick={() => void refreshIde(parentPath(ideDirectory))}>
-                  <BriefcaseBusiness size={16} />
-                  ..
-                </button>
-              )}
-              <div className="fileTree">
-                {ideEntries.map((entry) => (
-                  <button
-                    className={`fileRow ${entry.type}`}
-                    key={entry.path}
-                    type="button"
-                    onClick={() => (entry.type === "directory" ? void refreshIde(entry.path) : void openIdeFile(entry.path))}
-                  >
-                    {entry.type === "directory" ? <BriefcaseBusiness size={16} /> : <FileCheck2 size={16} />}
-                    <span>{entry.name}</span>
-                  </button>
-                ))}
-              </div>
-            </section>
-
-            <section className="ideEditor">
-              <div className="ideEditorHeader">
-                <div>
-                  <span>Editor</span>
-                  <strong>{activeFilePath}</strong>
-                  <small>{activeFileLanguage}</small>
-                </div>
-                <div className="buttonRow">
-                  <button disabled={!ideRuntimeReady || busy || !activeFilePath} type="button" onClick={() => void openIdeFile(activeFilePath)}>
-                    <Activity size={16} />
-                    Reload
-                  </button>
-                  <button disabled={!ideRuntimeReady || busy || !activeFilePath} type="button" onClick={() => void saveIdeFile()}>
-                    <FileCheck2 size={16} />
-                    Save
-                  </button>
-                </div>
-              </div>
-              <textarea
-                className="codeEditor"
-                spellCheck={false}
-                value={activeFileContent}
-                onChange={(event) => setActiveFileContent(event.target.value)}
-              />
-            </section>
-
-            <section className="ideRuntime">
-              <div className="terminalCard">
-                <div className="sectionHeader">
-                  <div>
-                    <span>Terminal</span>
-                    <strong>{desktopReady ? "Native governed runtime" : "Local governed runtime"}</strong>
-                  </div>
-                  <Badge value={desktopReady ? "desktop" : liveReady ? "API live" : "offline"} />
-                </div>
+  function renderAuth(mode: "signin" | "signup") {
+    const isSignup = mode === "signup";
+    return (
+      <main className="authPage">
+        <AppHeader copy={copy} locale={locale} setLocale={setLocale} right={<button type="button" onClick={() => setView("home")}>AgentOps</button>} />
+        <section className="authLayout">
+          <div>
+            <span>{copy.account}</span>
+            <h1>{isSignup ? copy.signup : copy.signin}</h1>
+            <p>{copy.heroBody}</p>
+          </div>
+          <form className="authPanel" onSubmit={(event) => authenticate(isSignup ? "/v1/auth/signup" : "/v1/auth/login", event)}>
+            {isSignup && (
+              <>
                 <label>
-                  <span>Command</span>
-                  <input value={ideCommand} onChange={(event) => setIdeCommand(event.target.value)} />
+                  <span>{copy.name}</span>
+                  <input required value={authForm.name} onChange={(event) => setAuthForm({ ...authForm, name: event.target.value })} />
                 </label>
-                <div className="buttonRow">
-                  <button disabled={!ideRuntimeReady || busy || !ideCommand.trim()} type="button" onClick={() => void runIdeCommand()}>
-                    <TerminalSquare size={16} />
-                    Run
-                  </button>
-                  <button disabled={!ideRuntimeReady || busy || !patchDiff.trim()} type="button" onClick={() => void applyIdePatch()}>
-                    <Hammer size={16} />
-                    Apply patch
-                  </button>
-                </div>
-                <pre>{ideOutput}</pre>
-              </div>
-
-              <div className="ideStatus">
-                <span>Runtime status</span>
-                <strong>{ideMessage}</strong>
-                <small>{desktopRuntime?.workspaceRoot || (liveReady ? API_URL : "Desktop app or local API required")}</small>
-              </div>
-
-              <div className="ideGovernance">
-                <div>
-                  <ShieldCheck size={17} />
-                  <span>Path guard</span>
-                  <strong>Project-scoped</strong>
-                </div>
-                <div>
-                  <FileDiff size={17} />
-                  <span>Patch mode</span>
-                  <strong>Approval-first</strong>
-                </div>
-                <div>
-                  <History size={17} />
-                  <span>Evidence</span>
-                  <strong>{missionEvidence.length} linked</strong>
-                </div>
-              </div>
-            </section>
-          </section>
-        )}
-      </section>
-
-      {newMissionOpen && (
-        <section className="modalBackdrop" role="presentation">
-          <form className="missionModal" onSubmit={createMission}>
-            <div className="sectionHeader">
-              <div>
-                <span>New mission</span>
-                <strong>Create governed work</strong>
-              </div>
-              <button type="button" onClick={() => setNewMissionOpen(false)}>
-                <X size={17} />
-              </button>
-            </div>
+                <label>
+                  <span>{copy.workspaceName}</span>
+                  <input required value={authForm.organization} onChange={(event) => setAuthForm({ ...authForm, organization: event.target.value })} />
+                </label>
+              </>
+            )}
             <label>
-              <span>Title</span>
-              <input value={newMissionTitle} onChange={(event) => setNewMissionTitle(event.target.value)} />
+              <span>{copy.email}</span>
+              <input required type="email" value={authForm.email} onChange={(event) => setAuthForm({ ...authForm, email: event.target.value })} />
             </label>
             <label>
-              <span>Intent</span>
-              <textarea value={newMissionBody} onChange={(event) => setNewMissionBody(event.target.value)} />
+              <span>{copy.password}</span>
+              <input required minLength={isSignup ? 8 : 1} type="password" value={authForm.password} onChange={(event) => setAuthForm({ ...authForm, password: event.target.value })} />
             </label>
-            <div className="buttonRow">
-              <button type="button" onClick={() => setNewMissionOpen(false)}>
-                Cancel
-              </button>
-              <button disabled={busy || !liveReady || !newMissionTitle.trim() || !newMissionBody.trim()} type="submit">
-                Create mission
-              </button>
-            </div>
+            {message && <p className="formError">{message}</p>}
+            <button className="primaryButton" disabled={busy} type="submit">
+              {isSignup ? <UserPlus size={17} /> : <KeyRound size={17} />}
+              {isSignup ? copy.signup : copy.signin}
+            </button>
+            <button type="button" onClick={() => setView(isSignup ? "signin" : "signup")}>
+              {isSignup ? copy.signin : copy.signup}
+            </button>
           </form>
         </section>
-      )}
-    </main>
+      </main>
+    );
+  }
+
+  function renderApp() {
+    return (
+      <main className="productShell">
+        <aside className="appSidebar">
+          <div className="brandRow">
+            <div className="brandMark">A</div>
+            <div>
+              <strong>AgentOps</strong>
+              <span>{asText(overview.organization?.name) || copy.organization}</span>
+            </div>
+          </div>
+          <nav className="appNav" aria-label="Application">
+            <NavButton active={activeTab === "missions"} icon={<LayoutDashboard size={18} />} label={copy.dashboard} onClick={() => setActiveTab("missions")} />
+            <NavButton active={activeTab === "agents"} icon={<Bot size={18} />} label={copy.agents} onClick={() => setActiveTab("agents")} />
+            <NavButton active={activeTab === "evidence"} icon={<FileCheck2 size={18} />} label={copy.evidence} onClick={() => setActiveTab("evidence")} />
+            <NavButton active={activeTab === "audit"} icon={<History size={18} />} label={copy.audit} onClick={() => setActiveTab("audit")} />
+            <NavButton active={activeTab === "desktop"} icon={<Code2 size={18} />} label={copy.desktop} onClick={() => setActiveTab("desktop")} />
+          </nav>
+          <div className="sidebarFooter">
+            <LanguageSelect locale={locale} setLocale={setLocale} />
+            <button disabled={busy} type="button" onClick={() => void logout()}>
+              <LogOut size={16} />
+              {copy.signout}
+            </button>
+          </div>
+        </aside>
+
+        <section className="appSurface">
+          <header className="appTopbar">
+            <div>
+              <span>{copy.realData}</span>
+              <h1>{copy.dashboard}</h1>
+            </div>
+            <div className="topbarActions">
+              <SystemPill ok={Boolean(liveStatus?.ok)} label="API" value={liveStatus?.environment ?? "offline"} />
+              <SystemPill ok={databaseReady} label={copy.liveDatabase} value={databaseReady ? copy.connected : copy.notReady} />
+              <button disabled={busy} type="button" onClick={() => void loadWorkspace()}>
+                <Activity size={16} />
+                {messages[locale].refresh}
+              </button>
+              <a className="buttonLike" href={releaseUrl} rel="noreferrer" target="_blank">
+                <Download size={16} />
+                {copy.download}
+              </a>
+            </div>
+          </header>
+
+          {message && (
+            <div className="statusBanner">
+              <BadgeCheck size={17} />
+              {message}
+              <button type="button" onClick={() => setMessage("")}>
+                <X size={15} />
+              </button>
+            </div>
+          )}
+
+          <section className="statsGrid">
+            <Stat icon={<BriefcaseBusiness size={18} />} label={messages[locale].missions} value={missions.length} />
+            <Stat icon={<Users size={18} />} label={copy.agents} value={overview.agents.length} />
+            <Stat icon={<FileCheck2 size={18} />} label={copy.evidence} value={overview.evidence.length} />
+            <Stat icon={<TerminalSquare size={18} />} label="Jobs" value={overview.jobs.length} />
+          </section>
+
+          {activeTab === "missions" && (
+            <section className="workspaceGrid">
+              <section className="missionColumn">
+                <form className="createMissionForm" onSubmit={createMission}>
+                  <div className="sectionHeader">
+                    <div>
+                      <span>{copy.createMission}</span>
+                      <strong>{copy.newMissionIntent}</strong>
+                    </div>
+                    <Plus size={18} />
+                  </div>
+                  <input
+                    placeholder={copy.newMissionTitle}
+                    value={missionForm.title}
+                    onChange={(event) => setMissionForm({ ...missionForm, title: event.target.value })}
+                  />
+                  <textarea
+                    placeholder={copy.missionIntent}
+                    value={missionForm.intent}
+                    onChange={(event) => setMissionForm({ ...missionForm, intent: event.target.value })}
+                  />
+                  <button className="primaryButton" disabled={busy || !projectId || !missionForm.title.trim() || !missionForm.intent.trim()} type="submit">
+                    <Send size={16} />
+                    {copy.createMission}
+                  </button>
+                </form>
+
+                <label className="searchBox">
+                  <Search size={16} />
+                  <input placeholder="Search missions" value={missionSearch} onChange={(event) => setMissionSearch(event.target.value)} />
+                </label>
+
+                <div className="missionList">
+                  {filteredMissions.map((mission) => (
+                    <button
+                      className={mission.id === activeMission?.id ? "missionItem active" : "missionItem"}
+                      key={mission.id}
+                      type="button"
+                      onClick={() => setSelectedMissionId(mission.id)}
+                    >
+                      <strong>{mission.title}</strong>
+                      <span>{mission.intent}</span>
+                      <Badge value={mission.status} />
+                    </button>
+                  ))}
+                  {filteredMissions.length === 0 && <EmptyState text={copy.noMissions} />}
+                </div>
+              </section>
+
+              <section className="detailColumn">
+                {activeMission ? (
+                  <>
+                    <div className="missionDetailHeader">
+                      <div>
+                        <span>{copy.status}</span>
+                        <h2>{activeMission.title}</h2>
+                        <p>{activeMission.intent}</p>
+                      </div>
+                      <Badge value={activeMission.status} />
+                    </div>
+                    <div className="actionGrid">
+                      <ActionButton disabled={busy} icon={<ListChecks size={18} />} label={copy.plan} onClick={() => void runMissionAction("plan")} />
+                      <ActionButton disabled={busy} icon={<Bot size={18} />} label={copy.runAgent} onClick={() => void runMissionAction("agent")} />
+                      <ActionButton disabled={busy} icon={<BadgeCheck size={18} />} label={copy.evaluate} onClick={() => void runMissionAction("evaluate")} />
+                      <ActionButton disabled={busy} icon={<ShieldCheck size={18} />} label={copy.approve} onClick={() => void runMissionAction("approve")} />
+                    </div>
+                    <div className="evidenceComposer">
+                      <input
+                        placeholder={copy.attachEvidence}
+                        value={evidenceForm.title}
+                        onChange={(event) => setEvidenceForm({ ...evidenceForm, title: event.target.value })}
+                      />
+                      <textarea
+                        placeholder={copy.missionIntent}
+                        value={evidenceForm.content}
+                        onChange={(event) => setEvidenceForm({ ...evidenceForm, content: event.target.value })}
+                      />
+                      <button disabled={busy} type="button" onClick={() => void runMissionAction("evidence")}>
+                        <FileCheck2 size={16} />
+                        {copy.attachEvidence}
+                      </button>
+                    </div>
+                    <RecordList title="Jobs" rows={activeMissionJobs} emptyText={copy.emptyState} />
+                    <RecordList title={copy.evidence} rows={activeMissionEvidence} emptyText={copy.emptyState} />
+                    <RecordList title={copy.audit} rows={activeMissionAudit} emptyText={copy.emptyState} />
+                  </>
+                ) : (
+                  <EmptyState text={copy.noMissions} />
+                )}
+              </section>
+            </section>
+          )}
+
+          {activeTab === "agents" && <RecordList title={copy.agents} rows={overview.agents} emptyText={copy.emptyState} />}
+          {activeTab === "evidence" && <RecordList title={copy.evidence} rows={overview.evidence} emptyText={copy.emptyState} />}
+          {activeTab === "audit" && <RecordList title={copy.audit} rows={overview.audit} emptyText={copy.emptyState} />}
+          {activeTab === "desktop" && <DesktopPanel copy={copy} runtime={desktopRuntime} providers={providers.length} tools={tools.length} />}
+        </section>
+      </main>
+    );
+  }
+
+  if (view === "signin") return renderAuth("signin");
+  if (view === "signup") return renderAuth("signup");
+  if (view === "app" && session) return renderApp();
+  return renderHome();
+}
+
+function AppHeader(props: {
+  copy: Record<string, string>;
+  locale: Locale;
+  setLocale: (locale: Locale) => void;
+  right: ReactElement | ReactElement[];
+}) {
+  return (
+    <header className="publicHeader">
+      <div className="brandRow">
+        <div className="brandMark">A</div>
+        <div>
+          <strong>AgentOps</strong>
+          <span>{props.copy.webApp}</span>
+        </div>
+      </div>
+      <div className="headerActions">
+        <LanguageSelect locale={props.locale} setLocale={props.setLocale} />
+        {props.right}
+      </div>
+    </header>
   );
 }
 
-function ActionButton(props: { icon: ReactElement; title: string; detail: string; onClick: () => void }) {
+function LanguageSelect(props: { locale: Locale; setLocale: (locale: Locale) => void }) {
   return (
-    <button className="actionCard" type="button" onClick={props.onClick}>
-      {props.icon}
-      <div>
-        <strong>{props.title}</strong>
-        <span>{props.detail}</span>
+    <label className="languageSelect">
+      <Languages size={16} />
+      <select value={props.locale} onChange={(event) => props.setLocale(event.target.value as Locale)}>
+        {locales.map((locale) => (
+          <option key={locale.code} value={locale.code}>
+            {locale.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function ProductPreview(props: { copy: Record<string, string> }) {
+  return (
+    <div className="productPreview">
+      <div className="previewTop">
+        <span />
+        <span />
+        <span />
+        <strong>AgentOps Web</strong>
       </div>
-      <ArrowUpRight size={15} />
+      <div className="previewGrid">
+        <div>
+          <BriefcaseBusiness size={20} />
+          <strong>{props.copy.webApp}</strong>
+          <small>{props.copy.realData}</small>
+        </div>
+        <div>
+          <Code2 size={20} />
+          <strong>{props.copy.desktopApp}</strong>
+          <small>{props.copy.download}</small>
+        </div>
+        <div>
+          <ShieldCheck size={20} />
+          <strong>{props.copy.status}</strong>
+          <small>{props.copy.liveDatabase}</small>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Feature(props: { icon: ReactElement; title: string; text: string }) {
+  return (
+    <article className="featureItem">
+      {props.icon}
+      <strong>{props.title}</strong>
+      <p>{props.text}</p>
+    </article>
+  );
+}
+
+function NavButton(props: { active: boolean; icon: ReactElement; label: string; onClick: () => void }) {
+  return (
+    <button className={props.active ? "active" : ""} type="button" onClick={props.onClick}>
+      {props.icon}
+      {props.label}
+    </button>
+  );
+}
+
+function SystemPill(props: { ok: boolean; label: string; value: string }) {
+  return (
+    <div className={props.ok ? "systemPill ok" : "systemPill"}>
+      <span>{props.label}</span>
+      <strong>{props.value}</strong>
+    </div>
+  );
+}
+
+function Stat(props: { icon: ReactElement; label: string; value: number }) {
+  return (
+    <div className="statTile">
+      {props.icon}
+      <span>{props.label}</span>
+      <strong>{props.value}</strong>
+    </div>
+  );
+}
+
+function ActionButton(props: { disabled: boolean; icon: ReactElement; label: string; onClick: () => void }) {
+  return (
+    <button disabled={props.disabled} type="button" onClick={props.onClick}>
+      {props.icon}
+      {props.label}
     </button>
   );
 }
 
 function Badge(props: { value: string }) {
-  return <em className={`badge ${slugClass(props.value)}`}>{displayStatus(props.value)}</em>;
+  return <em className={`badge ${slugClass(props.value)}`}>{props.value.replace(/_/g, " ")}</em>;
 }
 
-function MetricTile(props: { label: string; value: string | number; trend?: string; tone?: "green" | "amber" }) {
+function EmptyState(props: { text: string }) {
   return (
-    <div className={`metricTile ${props.tone ?? "green"}`}>
-      <span>{props.label}</span>
-      <strong>{props.value}</strong>
-      {props.trend && <em>{props.trend}</em>}
+    <div className="emptyState">
+      <Globe2 size={22} />
+      <p>{props.text}</p>
     </div>
   );
 }
 
-function ProductionStat(props: { icon: ReactElement; label: string; value: string; tone: "green" | "amber" }) {
+function RecordList(props: { title: string; rows: Row[]; emptyText: string }) {
   return (
-    <div className={`productionStat ${props.tone}`}>
-      {props.icon}
-      <span>{props.label}</span>
-      <strong>{props.value}</strong>
-    </div>
+    <section className="recordPanel">
+      <div className="sectionHeader">
+        <div>
+          <span>{props.title}</span>
+          <strong>{props.rows.length}</strong>
+        </div>
+      </div>
+      <div className="recordList">
+        {props.rows.slice(0, 12).map((row, index) => (
+          <div className="recordRow" key={asText(row.id) || index}>
+            <FileCheck2 size={16} />
+            <div>
+              <strong>{asText(row.title) || asText(row.name) || asText(row.eventType) || asText(row.type) || asText(row.id) || "Record"}</strong>
+              <span>{asText(row.status) || asText(row.decision) || asText(row.result) || asText(row.role) || "stored"}</span>
+            </div>
+            <time>{formatTime(asText(row.createdAt))}</time>
+          </div>
+        ))}
+        {props.rows.length === 0 && <EmptyState text={props.emptyText} />}
+      </div>
+    </section>
   );
 }
 
-function ThroughputChart() {
-  const points = "0,94 34,78 68,82 102,62 136,70 170,48 204,54 238,34 272,42 306,24 340,18";
+function DesktopPanel(props: { copy: Record<string, string>; runtime: DesktopRuntime | null; providers: number; tools: number }) {
   return (
-    <svg className="throughputChart" viewBox="0 0 360 120" aria-hidden="true">
-      <path d="M0 100H360M0 72H360M0 44H360M0 16H360" />
-      <polyline points={points} />
-      <circle cx="238" cy="34" r="4" />
-      <circle cx="340" cy="18" r="4" />
-    </svg>
+    <section className="desktopPanel">
+      <div>
+        <span>{props.copy.desktopApp}</span>
+        <h2>{props.copy.download}</h2>
+        <p>{props.copy.desktopBody}</p>
+        <div className="heroActions">
+          <a className="buttonLike primaryButton" href={releaseUrl} rel="noreferrer" target="_blank">
+            <Download size={17} />
+            {props.copy.download}
+          </a>
+          <a className="buttonLike" href={API_URL.replace(/\/api$/, "")} rel="noreferrer" target="_blank">
+            <Globe2 size={17} />
+            {props.copy.webApp}
+          </a>
+        </div>
+      </div>
+      <div className="desktopStatusGrid">
+        <Stat icon={<Code2 size={18} />} label="Runtime" value={props.runtime ? 1 : 0} />
+        <Stat icon={<Bot size={18} />} label="Providers" value={props.providers} />
+        <Stat icon={<TerminalSquare size={18} />} label="Tools" value={props.tools} />
+      </div>
+    </section>
   );
 }
 
@@ -1347,103 +972,20 @@ function toMissionView(row: Row): MissionView {
   };
 }
 
-function previewPolicyRows(): Row[] {
-  return [
-    { name: "Patch-first output required", decision: "allow", severity: "info" },
-    { name: "Human approval before execution", decision: "require_approval", severity: "medium" },
-    { name: "Sandbox required for commands", decision: "require_sandbox", severity: "medium" }
-  ];
-}
-
-function tabIcon(tab: string) {
-  if (tab.includes("Agent")) return <Bot size={16} />;
-  if (tab.includes("Patch")) return <FileDiff size={16} />;
-  if (tab.includes("Sandbox")) return <TerminalSquare size={16} />;
-  if (tab.includes("Audit")) return <History size={16} />;
-  return <Sparkles size={16} />;
-}
-
-function modeIcon(mode: WorkMode) {
-  if (mode === "agent") return <Bot size={16} />;
-  if (mode === "terminal") return <TerminalSquare size={16} />;
-  if (mode === "patch") return <FileDiff size={16} />;
-  return <FileCheck2 size={16} />;
-}
-
-function modeLabel(mode: WorkMode) {
-  if (mode === "agent") return "Agent";
-  if (mode === "terminal") return "Terminal";
-  if (mode === "patch") return "Diff";
-  return "Evidence";
-}
-
-function statusIcon(status: string) {
-  const normalized = status.toLowerCase();
-  if (normalized.includes("approved") || normalized.includes("closed")) return <Check size={16} />;
-  if (normalized.includes("waiting") || normalized.includes("review")) return <Clock3 size={16} />;
-  if (normalized.includes("failed") || normalized.includes("risk")) return <AlertTriangle size={16} />;
-  return <Play size={16} />;
-}
-
-function jobIcon(type: string) {
-  if (type.includes("command")) return <TerminalSquare size={18} />;
-  if (type.includes("evaluation")) return <BadgeCheck size={18} />;
-  if (type.includes("patch")) return <FileDiff size={18} />;
-  if (type.includes("tool")) return <Wrench size={18} />;
-  return <Bot size={18} />;
-}
-
-function parentPath(input: string) {
-  const parts = input.split("/").filter(Boolean);
-  parts.pop();
-  return parts.join("/");
-}
-
-function formatTerminalResult(result: IdeTerminalResult) {
-  const header = `$ ${result.command}\nexit: ${result.exitCode ?? "signal"} | ${result.durationMs}ms`;
-  const stdout = result.stdout ? `\n\nstdout\n${result.stdout}` : "";
-  const stderr = result.stderr ? `\n\nstderr\n${result.stderr}` : "";
-  const truncated = result.truncated ? "\n\n[output truncated]" : "";
-  return `${header}${stdout}${stderr}${truncated}`.trim();
-}
-
-function titleFromIntent(intent: string) {
-  const trimmed = intent.trim();
-  if (!trimmed) return "";
-  return trimmed.length > 58 ? `${trimmed.slice(0, 58)}...` : trimmed;
-}
-
-function riskScoreFor(risk: string, blockers: number) {
-  const normalized = risk.toLowerCase();
-  const base = normalized.includes("critical") ? 92 : normalized.includes("high") ? 76 : normalized.includes("medium") ? 48 : 24;
-  return Math.min(99, base + blockers * 12);
-}
-
-function displayStatus(value: string) {
-  return value.replace(/_/g, " ");
-}
-
-function shortHash(value: string) {
-  if (!value) return "no hash";
-  return value.length > 14 ? `${value.slice(0, 8)}...${value.slice(-4)}` : value;
+function readLocale(): Locale {
+  try {
+    const stored = localStorage.getItem("agentops.locale");
+    return stored === "en" || stored === "fr" || stored === "es" || stored === "zh" ? stored : "en";
+  } catch {
+    return "en";
+  }
 }
 
 function formatTime(value: string) {
-  if (!value) return "now";
+  if (!value) return "";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "now";
+  if (Number.isNaN(date.getTime())) return "";
   return new Intl.DateTimeFormat("en", { hour: "numeric", minute: "2-digit" }).format(date);
-}
-
-function formatDateTime(value: string) {
-  if (!value) return "pending";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "pending";
-  return new Intl.DateTimeFormat("en", {
-    hour: "numeric",
-    minute: "2-digit",
-    second: "2-digit"
-  }).format(date);
 }
 
 function slugClass(value: string) {

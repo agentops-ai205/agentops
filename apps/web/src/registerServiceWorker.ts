@@ -1,4 +1,5 @@
 export function registerServiceWorker() {
+  if (typeof window === "undefined" || typeof navigator === "undefined") return;
   if (!("serviceWorker" in navigator)) return;
 
   if (import.meta.env.DEV) {

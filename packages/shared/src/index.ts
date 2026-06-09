@@ -86,6 +86,7 @@ export const modelProviderKinds = [
   "private_endpoint"
 ] as const;
 export const modelFinishReasons = ["stop", "length", "tool_call", "error"] as const;
+export const supportedLocales = ["en", "fr", "es", "zh"] as const;
 
 export type MissionStatus = (typeof missionStatuses)[number];
 export type RiskLevel = (typeof riskLevels)[number];
@@ -98,6 +99,7 @@ export type JobType = (typeof jobTypes)[number];
 export type JobStatus = (typeof jobStatuses)[number];
 export type ModelProviderKind = (typeof modelProviderKinds)[number];
 export type ModelFinishReason = (typeof modelFinishReasons)[number];
+export type SupportedLocale = (typeof supportedLocales)[number];
 
 export const scopeSchema = z.object({
   include: z.array(z.string()).default([]),
@@ -213,6 +215,19 @@ export const improvementProposalSchema = z.object({
   approval_required_from: z.array(z.string()).default(["technical_owner"])
 });
 
+export const signupSchema = z.object({
+  name: z.string().min(2).max(120),
+  email: z.string().email().max(320),
+  password: z.string().min(8).max(256),
+  organization_name: z.string().min(2).max(160),
+  language: z.enum(supportedLocales).default("en")
+});
+
+export const loginSchema = z.object({
+  email: z.string().email().max(320),
+  password: z.string().min(1).max(256)
+});
+
 export type CreateProjectInput = z.infer<typeof createProjectSchema>;
 export type CreateMissionInput = z.infer<typeof createMissionSchema>;
 export type PolicyAction = z.infer<typeof policyActionSchema>;
@@ -223,3 +238,5 @@ export type ApplyPatchInput = z.infer<typeof applyPatchSchema>;
 export type EnqueueJobInput = z.infer<typeof enqueueJobSchema>;
 export type AgentRunInput = z.infer<typeof agentRunSchema>;
 export type ImprovementProposalInput = z.infer<typeof improvementProposalSchema>;
+export type SignupInput = z.infer<typeof signupSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;

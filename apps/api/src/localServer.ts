@@ -8,8 +8,10 @@ import {
   enqueueJobSchema,
   evidenceSchema,
   improvementProposalSchema,
+  loginSchema,
   policyActionSchema,
-  proposePatchSchema
+  proposePatchSchema,
+  signupSchema
 } from "@agentops/shared";
 import Fastify from "fastify";
 import { spawn } from "node:child_process";
@@ -36,6 +38,8 @@ interface LocalStore {
   improvements: Row[];
   patches: Row[];
   jobs: Row[];
+  users: Row[];
+  sessions: Row[];
 }
 
 const storePath =
@@ -125,6 +129,102 @@ app.get("/health", async () => ({
   service: "agentops-local-api",
   environment: "local_file"
 }));
+
+app.post("/v1/auth/signup", async (request, reply) => {
+  const body = signupSchema.parse(request.body);
+  const email = body.email.trim().toLowerCase();
+  const store = await mutate((draft) => {
+    if (draft.users.some((user) => user.email === email)) throw new Error("This email is already registered.");
+    const organization = {
+      id: prefixedId("org"),
+      name: body.organization_name,
+      plan: "local",
+      createdAt: now(),
+      updatedAt: now()
+    };
+    const project = {
+      id: `com.agentops.${slug(body.organization_name)}.${randomUUID().slice(0, 6)}`,
+      organizationId: organization.id,
+      name: `${body.organization_name} workspace`,
+      type: "agentic_operations",
+      criticality: "medium",
+      owners: { product: email, technical: email },
+      repos: [`local:${config.projectRoot}`],
+      createdAt: now(),
+      updatedAt: now()
+    };
+    const user = {
+      id: prefixedId("usr"),
+      organizationId: organization.id,
+      email,
+      name: body.name,
+      passwordHash: localPasswordHash(body.password),
+      role: "owner",
+      language: body.language,
+      status: "active",
+      createdAt: now(),
+      updatedAt: now()
+    };
+    draft.organization = organization;
+    draft.project = project;
+    draft.users = [user];
+    draft.sessions = [];
+    draft.missions = [];
+    draft.agents = defaultAgents(organization.id);
+    draft.policies = defaultPolicies();
+    draft.approvals = [];
+    draft.evidence = [];
+    draft.audit = [];
+    draft.memory = [];
+    draft.evaluations = [];
+    draft.improvements = [];
+    draft.patches = [];
+    draft.jobs = [];
+    audit(draft, {
+      projectId: project.id,
+      actorId: user.id,
+      eventType: "local_user_signup",
+      reason: `Local workspace created for ${body.organization_name}`,
+      metadata: { user_id: user.id }
+    });
+  });
+  const user = store.users[0];
+  const token = await createLocalSession(user, store);
+  return reply.code(201).send({
+    token,
+    user: publicUser(user),
+    organization: store.organization,
+    project: store.project
+  });
+});
+
+app.post("/v1/auth/login", async (request) => {
+  const body = loginSchema.parse(request.body);
+  const email = body.email.trim().toLowerCase();
+  const store = await loadStore();
+  const user = store.users.find((item) => item.email === email);
+  if (!user || user.passwordHash !== localPasswordHash(body.password)) {
+    throw new Error("Email or password is incorrect.");
+  }
+  const token = await createLocalSession(user, store);
+  return { token, user: publicUser(user), organization: store.organization };
+});
+
+app.get("/v1/auth/me", async (request, reply) => {
+  const user = await localUserFromAuthorization(request.headers.authorization);
+  if (!user) return reply.code(401).send({ error: { code: "SESSION_EXPIRED", message: "Session expired." } });
+  const store = await loadStore();
+  return { user: publicUser(user), organization: store.organization };
+});
+
+app.post("/v1/auth/logout", async (request) => {
+  const token = bearerToken(request.headers.authorization);
+  if (!token) return { ok: true };
+  await mutate((draft) => {
+    draft.sessions = draft.sessions.filter((session) => session.token !== token);
+  });
+  return { ok: true };
+});
 
 app.post("/v1/bootstrap", async () => {
   const store = await loadStore();
@@ -790,7 +890,7 @@ async function ensureStore() {
 
 async function loadStore(): Promise<LocalStore> {
   try {
-    return JSON.parse(await readFile(storePath, "utf8")) as LocalStore;
+    return normalizeStore(JSON.parse(await readFile(storePath, "utf8")) as LocalStore);
   } catch {
     return seedStore();
   }
@@ -833,22 +933,8 @@ function seedStore(): LocalStore {
     organization,
     project,
     missions,
-    agents: [
-      agent("planner", "Mission Planner", ["mission_structuring", "scope_control"]),
-      agent("architect", "System Architect", ["impact_mapping", "risk_strategy"]),
-      agent("coder", "Controlled Coder", ["scoped_write", "patch_generation"]),
-      agent("tester", "Verification Tester", ["tests", "builds", "regression"]),
-      agent("security", "Security Reviewer", ["secrets", "permissions", "supply_chain"]),
-      agent("reviewer", "Human-aligned Reviewer", ["quality_review", "maintainability"]),
-      agent("metadev", "MetaDev Supervisor", ["improvement_proposals", "replay_analysis"])
-    ],
-    policies: [
-      policy("deny_secrets_and_prod_paths", "deny", "critical"),
-      policy("require_approval_for_auth_changes", "require_approval", "high"),
-      policy("require_approval_for_database_changes", "require_approval", "high"),
-      policy("require_sandbox_for_unlisted_command", "require_sandbox", "medium"),
-      policy("require_approval_for_high_autonomy", "require_approval", "high")
-    ],
+    agents: defaultAgents(organization.id),
+    policies: defaultPolicies(),
     approvals: [],
     evidence: [],
     audit: [],
@@ -867,7 +953,9 @@ function seedStore(): LocalStore {
     evaluations: [],
     improvements: [],
     patches: [],
-    jobs: []
+    jobs: [],
+    users: [],
+    sessions: []
   };
 
   const firstMission = store.missions[0];
@@ -914,6 +1002,14 @@ function seedStore(): LocalStore {
     reason: "Local persistent AgentOps store initialized."
   });
   return store;
+}
+
+function normalizeStore(store: LocalStore): LocalStore {
+  return {
+    ...store,
+    users: store.users ?? [],
+    sessions: store.sessions ?? []
+  };
 }
 
 function overview(store: LocalStore) {
@@ -964,9 +1060,32 @@ function mission(project: Row, id: string, title: string, intent: string, status
   };
 }
 
-function agent(role: string, name: string, capabilities: string[]) {
+function defaultAgents(organizationId: unknown) {
+  return [
+    agent(organizationId, "planner", "Mission Planner", ["mission_structuring", "scope_control"]),
+    agent(organizationId, "architect", "System Architect", ["impact_mapping", "risk_strategy"]),
+    agent(organizationId, "coder", "Controlled Coder", ["scoped_write", "patch_generation"]),
+    agent(organizationId, "tester", "Verification Tester", ["tests", "builds", "regression"]),
+    agent(organizationId, "security", "Security Reviewer", ["secrets", "permissions", "supply_chain"]),
+    agent(organizationId, "reviewer", "Human-aligned Reviewer", ["quality_review", "maintainability"]),
+    agent(organizationId, "metadev", "MetaDev Supervisor", ["improvement_proposals", "replay_analysis"])
+  ];
+}
+
+function defaultPolicies() {
+  return [
+    policy("deny_secrets_and_prod_paths", "deny", "critical"),
+    policy("require_approval_for_auth_changes", "require_approval", "high"),
+    policy("require_approval_for_database_changes", "require_approval", "high"),
+    policy("require_sandbox_for_unlisted_command", "require_sandbox", "medium"),
+    policy("require_approval_for_high_autonomy", "require_approval", "high")
+  ];
+}
+
+function agent(organizationId: unknown, role: string, name: string, capabilities: string[]) {
   return {
     id: `agent.${role}`,
+    organizationId,
     role,
     name,
     capabilities,
@@ -1184,6 +1303,51 @@ function runLocalCommandWithInput(command: string, cwd: string, input?: string) 
 
 function prefixedId(prefix: string) {
   return `${prefix}_${randomUUID().slice(0, 8)}`;
+}
+
+function localPasswordHash(password: string) {
+  return createHash("sha256").update(`agentops-local:${password}`).digest("hex");
+}
+
+async function createLocalSession(user: Row, store: LocalStore) {
+  const token = `aos_local_${randomUUID().replace(/-/g, "")}`;
+  const session = {
+    id: prefixedId("ses"),
+    token,
+    userId: user.id,
+    organizationId: user.organizationId,
+    createdAt: now(),
+    expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString()
+  };
+  store.sessions.unshift(session);
+  await saveStore(store);
+  return token;
+}
+
+async function localUserFromAuthorization(value: string | string[] | undefined) {
+  const token = bearerToken(value);
+  if (!token) return null;
+  const store = await loadStore();
+  const session = store.sessions.find((item) => item.token === token && String(item.expiresAt) > now());
+  if (!session) return null;
+  return store.users.find((user) => user.id === session.userId) ?? null;
+}
+
+function bearerToken(value: string | string[] | undefined) {
+  const authorization = Array.isArray(value) ? value[0] : value;
+  if (!authorization?.startsWith("Bearer ")) return "";
+  return authorization.slice("Bearer ".length).trim();
+}
+
+function publicUser(user: Row) {
+  return {
+    id: user.id,
+    organization_id: user.organizationId,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    language: user.language
+  };
 }
 
 function sha256(value: unknown) {
