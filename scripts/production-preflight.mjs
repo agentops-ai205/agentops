@@ -38,7 +38,8 @@ const requiredFiles = [
   "apps/api/migrations/0001_agentops.sql",
   "apps/api/migrations/0002_supabase_ready_tenancy.sql",
   "apps/api/migrations/0003_supabase_rls.sql",
-  "apps/api/migrations/0004_user_auth.sql"
+  "apps/api/migrations/0004_user_auth.sql",
+  "apps/api/migrations/0005_server_api_rls.sql"
 ];
 
 const checks = [];
